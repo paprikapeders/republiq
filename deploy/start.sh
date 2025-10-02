@@ -15,11 +15,6 @@ if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
 fi
 
-# Run database migrations (only if database is configured)
-if [ ! -z "$DATABASE_URL" ] || [ ! -z "$DB_HOST" ]; then
-    echo "Running database migrations..."
-    php artisan migrate --force
-fi
 
 # Clear and cache config
 echo "Optimizing Laravel..."
@@ -37,9 +32,6 @@ exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.confnerate appli
 if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
 fi
-
-# Run database migrations
-php artisan migrate --force
 
 # Clear and cache config
 php artisan config:cache
