@@ -7,7 +7,7 @@ ENV COMPOSER_NO_INTERACTION=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git curl unzip libpq-dev libzip-dev zip nginx supervisor \
+    git curl unzip libpq-dev libzip-dev zip nginx supervisor gettext-base \
     && docker-php-ext-install pdo pdo_mysql zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -44,18 +44,17 @@ COPY deploy/nginx.conf /etc/nginx/sites-available/default
 COPY deploy/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY deploy/start.sh /usr/local/bin/start.sh
 
-# Make start script executable
-RUN chmod +x /usr/local/bin/start.sh
-
-# Remove default nginx site and enable our site
+# Configure nginx
 RUN rm -f /etc/nginx/sites-enabled/default \
-    && ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
+    && ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/ \
+    && chmod +x /usr/local/bin/start.sh
 
-# Expose port for Railway/Render
+# Create nginx run directory
+RUN mkdir -p /var/run/nginx
+
+# Expose port for Render (Render will set PORT env var)
 EXPOSE 10000
-
-# Set default PORT environment variable
-ENV PORT=10000
 
 # Use start script as entrypoint
 CMD ["/usr/local/bin/start.sh"]
+
