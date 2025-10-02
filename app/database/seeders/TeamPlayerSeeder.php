@@ -68,13 +68,118 @@ class TeamPlayerSeeder extends Seeder
                     ['name' => 'Blake Moore', 'position' => 'Forward', 'number' => 31],
                     ['name' => 'Connor Hall', 'position' => 'Center', 'number' => 32],
                 ]
+            ],
+            [
+                'name' => 'Steel Titans',
+                'players' => [
+                    ['name' => 'Zion Williams', 'position' => 'Point Guard', 'number' => 1],
+                    ['name' => 'Kai Johnson', 'position' => 'Shooting Guard', 'number' => 2],
+                    ['name' => 'Luka Martinez', 'position' => 'Small Forward', 'number' => 3],
+                    ['name' => 'Giannis Rodriguez', 'position' => 'Power Forward', 'number' => 4],
+                    ['name' => 'Joel Anderson', 'position' => 'Center', 'number' => 5],
+                    ['name' => 'Ja Thompson', 'position' => 'Point Guard', 'number' => 11],
+                    ['name' => 'Trae Young', 'position' => 'Guard', 'number' => 12],
+                    ['name' => 'Jayson Brown', 'position' => 'Forward', 'number' => 13],
+                    ['name' => 'Anthony Davis', 'position' => 'Forward', 'number' => 14],
+                    ['name' => 'Nikola Wilson', 'position' => 'Center', 'number' => 15],
+                ]
+            ],
+            [
+                'name' => 'Phoenix Suns',
+                'players' => [
+                    ['name' => 'Devin Booker', 'position' => 'Shooting Guard', 'number' => 1],
+                    ['name' => 'Chris Paul', 'position' => 'Point Guard', 'number' => 3],
+                    ['name' => 'Kevin Durant', 'position' => 'Small Forward', 'number' => 35],
+                    ['name' => 'Deandre Ayton', 'position' => 'Center', 'number' => 22],
+                    ['name' => 'Mikal Bridges', 'position' => 'Forward', 'number' => 25],
+                    ['name' => 'Cameron Johnson', 'position' => 'Forward', 'number' => 23],
+                    ['name' => 'Landry Shamet', 'position' => 'Guard', 'number' => 14],
+                    ['name' => 'Bismack Biyombo', 'position' => 'Center', 'number' => 18],
+                    ['name' => 'Torrey Craig', 'position' => 'Forward', 'number' => 12],
+                    ['name' => 'Ish Wainright', 'position' => 'Forward', 'number' => 15],
+                ]
+            ],
+            [
+                'name' => 'Golden Warriors',
+                'players' => [
+                    ['name' => 'Stephen Curry', 'position' => 'Point Guard', 'number' => 30],
+                    ['name' => 'Klay Thompson', 'position' => 'Shooting Guard', 'number' => 11],
+                    ['name' => 'Andrew Wiggins', 'position' => 'Small Forward', 'number' => 22],
+                    ['name' => 'Draymond Green', 'position' => 'Power Forward', 'number' => 23],
+                    ['name' => 'James Wiseman', 'position' => 'Center', 'number' => 33],
+                    ['name' => 'Jordan Poole', 'position' => 'Guard', 'number' => 3],
+                    ['name' => 'Gary Payton II', 'position' => 'Guard', 'number' => 0],
+                    ['name' => 'Otto Porter Jr', 'position' => 'Forward', 'number' => 32],
+                    ['name' => 'Kevon Looney', 'position' => 'Center', 'number' => 5],
+                    ['name' => 'Moses Moody', 'position' => 'Guard', 'number' => 4],
+                ]
+            ],
+            [
+                'name' => 'Miami Heat',
+                'players' => [
+                    ['name' => 'Jimmy Butler', 'position' => 'Small Forward', 'number' => 22],
+                    ['name' => 'Tyler Herro', 'position' => 'Shooting Guard', 'number' => 14],
+                    ['name' => 'Bam Adebayo', 'position' => 'Center', 'number' => 13],
+                    ['name' => 'Kyle Lowry', 'position' => 'Point Guard', 'number' => 7],
+                    ['name' => 'Duncan Robinson', 'position' => 'Forward', 'number' => 55],
+                    ['name' => 'PJ Tucker', 'position' => 'Forward', 'number' => 17],
+                    ['name' => 'Max Strus', 'position' => 'Guard', 'number' => 31],
+                    ['name' => 'Gabe Vincent', 'position' => 'Guard', 'number' => 2],
+                    ['name' => 'Caleb Martin', 'position' => 'Forward', 'number' => 16],
+                    ['name' => 'Dewayne Dedmon', 'position' => 'Center', 'number' => 21],
+                ]
+            ],
+            [
+                'name' => 'Boston Celtics',
+                'players' => [
+                    ['name' => 'Jayson Tatum', 'position' => 'Small Forward', 'number' => 0],
+                    ['name' => 'Jaylen Brown', 'position' => 'Shooting Guard', 'number' => 7],
+                    ['name' => 'Marcus Smart', 'position' => 'Point Guard', 'number' => 36],
+                    ['name' => 'Robert Williams', 'position' => 'Center', 'number' => 44],
+                    ['name' => 'Al Horford', 'position' => 'Power Forward', 'number' => 42],
+                    ['name' => 'Malcolm Brogdon', 'position' => 'Guard', 'number' => 13],
+                    ['name' => 'Derrick White', 'position' => 'Guard', 'number' => 9],
+                    ['name' => 'Grant Williams', 'position' => 'Forward', 'number' => 12],
+                    ['name' => 'Payton Pritchard', 'position' => 'Guard', 'number' => 11],
+                    ['name' => 'Luke Kornet', 'position' => 'Center', 'number' => 40],
+                ]
+            ],
+            [
+                'name' => 'Brooklyn Nets',
+                'players' => [
+                    ['name' => 'Ben Simmons', 'position' => 'Small Forward', 'number' => 10],
+                    ['name' => 'Cam Thomas', 'position' => 'Shooting Guard', 'number' => 24],
+                    ['name' => 'Spencer Dinwiddie', 'position' => 'Point Guard', 'number' => 26],
+                    ['name' => 'Nic Claxton', 'position' => 'Center', 'number' => 33],
+                    ['name' => 'Dorian Finney-Smith', 'position' => 'Forward', 'number' => 28],
+                    ['name' => 'Royce ONeale', 'position' => 'Forward', 'number' => 00],
+                    ['name' => 'Joe Harris', 'position' => 'Guard', 'number' => 12],
+                    ['name' => 'Seth Curry', 'position' => 'Guard', 'number' => 30],
+                    ['name' => 'Day Ron Sharpe', 'position' => 'Center', 'number' => 20],
+                    ['name' => 'Trendon Watford', 'position' => 'Forward', 'number' => 2],
+                ]
+            ],
+            [
+                'name' => 'Dallas Mavericks',
+                'players' => [
+                    ['name' => 'Luka Doncic', 'position' => 'Point Guard', 'number' => 77],
+                    ['name' => 'Kyrie Irving', 'position' => 'Point Guard', 'number' => 2],
+                    ['name' => 'Christian Wood', 'position' => 'Power Forward', 'number' => 35],
+                    ['name' => 'Tim Hardaway Jr', 'position' => 'Shooting Guard', 'number' => 11],
+                    ['name' => 'Dwight Powell', 'position' => 'Center', 'number' => 7],
+                    ['name' => 'Josh Green', 'position' => 'Guard', 'number' => 8],
+                    ['name' => 'Maxi Kleber', 'position' => 'Forward', 'number' => 42],
+                    ['name' => 'Reggie Bullock', 'position' => 'Forward', 'number' => 25],
+                    ['name' => 'JaVale McGee', 'position' => 'Center', 'number' => 00],
+                    ['name' => 'Frank Ntilikina', 'position' => 'Guard', 'number' => 21],
+                ]
             ]
         ];
 
         // Clear existing data (handled by parent seeder)
         // Data clearing is handled by BasketballLeagueSeeder
 
-        foreach ($teamsData as $teamData) {
+        foreach ($teamsData as $index => $teamData) {
             // Create coach for each team
             $coach = User::create([
                 'name' => 'Coach ' . explode(' ', $teamData['name'])[0],
@@ -84,12 +189,13 @@ class TeamPlayerSeeder extends Seeder
                 'email_verified_at' => now(),
             ]);
 
-            // Create team
+            // Create team - distribute teams between leagues
+            $leagueId = ($index < 6) ? 1 : 2; // First 6 teams in Premier League, rest in Development League
             $team = Team::create([
                 'name' => $teamData['name'],
                 'coach_id' => $coach->id,
                 'code' => strtoupper(substr(str_replace(' ', '', $teamData['name']), 0, 4)) . rand(10, 99),
-                'league_id' => 1 // Default to first league
+                'league_id' => $leagueId
             ]);
 
             // Create players for the team

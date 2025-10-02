@@ -30,7 +30,7 @@ export default function Login({ status, canResetPassword }) {
                             </div>
                             <div className="text-left">
                                 <h1 className="text-white text-xl font-semibold">Welcome Back</h1>
-                                <p className="text-orange-100 text-sm">Philippine Basketball League</p>
+                                <p className="text-orange-100 text-sm">Republiq Basketball League</p>
                             </div>
                         </div>
                     </div>

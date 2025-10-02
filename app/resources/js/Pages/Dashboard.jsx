@@ -103,7 +103,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-bold text-gray-900">Welcome to PBL!</h3>
-                                    <p className="text-gray-600">Philippine Basketball League Management System</p>
+                                    <p className="text-gray-600">Republiq Basketball League Management System</p>
                                 </div>
                             </div>
                             

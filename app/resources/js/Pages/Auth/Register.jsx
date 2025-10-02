@@ -33,7 +33,7 @@ export default function Register() {
                             </div>
                             <div className="text-left">
                                 <h1 className="text-white text-xl font-semibold">Join the League</h1>
-                                <p className="text-blue-100 text-sm">Philippine Basketball League</p>
+                                <p className="text-blue-100 text-sm">Republiq Basketball League</p>
                             </div>
                         </div>
                     </div>
@@ -188,10 +188,10 @@ export default function Register() {
                                                 <strong>ASSUMPTION OF RISK:</strong> I understand that basketball is a contact sport that involves physical exertion and carries inherent risks of injury, including but not limited to sprains, strains, fractures, concussions, and other serious injuries that may result in permanent disability or death.
                                             </p>
                                             <p className="mb-2">
-                                                <strong>RELEASE OF LIABILITY:</strong> In consideration of being allowed to participate in the Philippine Basketball League activities, I hereby release, waive, discharge, and covenant not to sue the Philippine Basketball League, its organizers, officials, coaches, volunteers, sponsors, and facilities from any and all liability, claims, demands, actions, and causes of action whatsoever arising out of or related to any loss, damage, or injury that may be sustained while participating in league activities.
+                                                <strong>RELEASE OF LIABILITY:</strong> In consideration of being allowed to participate in the Republiq Basketball League activities, I hereby release, waive, discharge, and covenant not to sue the Republiq Basketball League, its organizers, officials, coaches, volunteers, sponsors, and facilities from any and all liability, claims, demands, actions, and causes of action whatsoever arising out of or related to any loss, damage, or injury that may be sustained while participating in league activities.
                                             </p>
                                             <p className="mb-2">
-                                                <strong>MEDICAL TREATMENT:</strong> I authorize the Philippine Basketball League representatives to seek emergency medical treatment on my behalf if necessary, and I assume full responsibility for any medical expenses incurred.
+                                                <strong>MEDICAL TREATMENT:</strong> I authorize the Republiq Basketball League representatives to seek emergency medical treatment on my behalf if necessary, and I assume full responsibility for any medical expenses incurred.
                                             </p>
                                             <p className="mb-2">
                                                 <strong>PHYSICAL CONDITION:</strong> I certify that I am physically fit and have no medical conditions that would prevent my safe participation in basketball activities. I have consulted with a physician if I have any concerns about my ability to participate.
