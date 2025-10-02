@@ -1,19 +1,17 @@
 # --- Stage 1: PHP dependencies ---
 FROM composer:2 AS vendor
 WORKDIR /app
-COPY composer.json composer.lock ./
+COPY app/composer.json app/composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
-COPY . .
-
+COPY app ./
 
 # --- Stage 2: Node build ---
 FROM node:22 AS frontend
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY app/package.json app/package-lock.json ./
 RUN npm ci
-COPY . .
+COPY app ./
 RUN npm run build
-
 
 # --- Stage 3: Final image with PHP-FPM ---
 FROM php:8.2-fpm
@@ -31,10 +29,15 @@ COPY --from=vendor /app/vendor ./vendor
 # Copy built frontend assets from node stage
 COPY --from=frontend /app/public/build ./public/build
 
-# Copy the rest of the app (controllers, routes, config, etc.)
-COPY . .
+# Copy the rest of the Laravel app
+COPY app ./
 
 # Expose PHP-FPM
 EXPOSE 9000
+
+# Optimize Laravel for prod
+RUN php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
 CMD ["php-fpm"]
