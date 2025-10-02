@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: queens_app
+    working_dir: /var/www/html/app
+    volumes:
+      - ./app:/var/www/html/app
+    networks:
+      - bwp-crm-new_bwp-crm-new-network
+
+  nginx:
+    image: nginx:latest
+    container_name: queens_nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./app:/var/www/html/app
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - bwp-crm-new_bwp-crm-new-network
+
+networks:
+  bwp-crm-new_bwp-crm-new-network:
+    external: true
