@@ -1,59 +1,41 @@
-# --- Stage 1: PHP dependencies ---
-FROM composer:2 AS vendor
-
-WORKDIR /app
-
-# Copy only composer files first (better caching)
-COPY app/composer.json app/composer.lock ./
-
-# Install PHP dependencies (skip artisan scripts here)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts
-
-# Copy the rest of Laravel (for autoload)
-COPY app ./
-
-
-# --- Stage 2: Node build (for Inertia/Vite) ---
-FROM node:22 AS frontend
-WORKDIR /app
-COPY app/package.json app/package-lock.json ./
-RUN npm ci
-COPY app ./
-RUN npm run build
-
-
-# --- Stage 3: Final runtime image ---
+# Use official PHP with FPM
 FROM php:8.2-fpm
 
-# Install system dependencies + PHP extensions
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git curl unzip libzip-dev libpq-dev zip \
-    && docker-php-ext-install pdo pdo_mysql bcmath pcntl zip
+    git curl unzip libpq-dev libzip-dev zip nginx supervisor \
+    && docker-php-ext-install pdo pdo_mysql zip
 
-# Install Composer (from official composer image)
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
+# Set working directory
 WORKDIR /var/www/html
 
-# Copy vendor deps from composer stage
-COPY --from=vendor /app/vendor ./vendor
+# Copy application files
+COPY . .
 
-# Copy built frontend assets from node stage
-COPY --from=frontend /app/public/build ./public/build
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN composer install --no-dev --optimize-autoloader
 
-# Copy the full Laravel app
-COPY app ./
+# Install Node + build frontend (optional if you use Vite)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install && npm run build
 
-# Ensure storage & bootstrap/cache are writable
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Configure permissions for storage and cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Run Laravel optimizations (now that PHP + extensions exist)
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache \
-    && php artisan event:cache
+# Copy Nginx config
+COPY deploy/nginx.conf /etc/nginx/sites-available/default
 
-# Expose PHP-FPM
-EXPOSE 9000
+# Copy Supervisor config to run php-fpm + nginx together
+COPY deploy/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-CMD ["php-fpm"]
+# Expose port Render expects
+EXPOSE 10000
+
+# Render sets $PORT, use it for Nginx
+ENV PORT=10000
+
+# Run supervisor (manages both Nginx + PHP-FPM)
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
