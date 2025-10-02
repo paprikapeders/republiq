@@ -1,17 +1,12 @@
 # --- Stage 1: PHP dependencies ---
 FROM composer:2 AS vendor
 
-# Install system deps for PHP extensions needed by Laravel
-RUN apt-get update && apt-get install -y \
-    libzip-dev unzip git curl \
-    && docker-php-ext-install zip pcntl bcmath
-
 WORKDIR /app
 
 # Copy composer files first (better cache)
 COPY app/composer.json app/composer.lock ./
 
-# Install PHP dependencies
+# Install PHP dependencies (no extensions needed here)
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
 # Copy rest of the Laravel app
@@ -30,7 +25,7 @@ RUN npm run build
 # --- Stage 3: Final runtime image ---
 FROM php:8.2-fpm
 
-# Install system dependencies
+# Install system dependencies + PHP extensions
 RUN apt-get update && apt-get install -y \
     git curl unzip libzip-dev zip \
     && docker-php-ext-install pdo pdo_mysql zip bcmath pcntl
