@@ -28,15 +28,22 @@ nginx -t
 
 echo "Starting services..."
 # Start supervisor
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.confnerate application key if not set
+set -e
+
+# 1. Generate APP_KEY if not set
 if [ -z "$APP_KEY" ]; then
-    php artisan key:generate --force
+    echo "APP_KEY not found. Generating..."
+    php artisan key:generate
 fi
 
-# Clear and cache config
+# 2. Ensure storage & cache folders are writable
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# 3. Run Laravel optimizations
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Start supervisor
+# 4. Start Supervisor (runs nginx + php-fpm)
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
