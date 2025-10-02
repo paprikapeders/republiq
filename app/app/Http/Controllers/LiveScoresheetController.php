@@ -268,7 +268,7 @@ class LiveScoresheetController extends Controller
             'league_id' => 'required|exists:leagues,id',
             'team_a_id' => 'required|exists:teams,id',
             'team_b_id' => 'required|exists:teams,id|different:team_a_id',
-            'date' => 'required|date|after:now',
+            'date' => 'required|date',
             'venue' => 'nullable|string|max:255',
         ]);
         
