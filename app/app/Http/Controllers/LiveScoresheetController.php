@@ -82,9 +82,23 @@ class LiveScoresheetController extends Controller
             'timeouts_per_quarter' => $game->timeouts_per_quarter ?: 2,
         ];
         
+        // Get all leagues with their teams for edit matchup functionality
+        $leagues = \App\Models\League::with('teams')
+            ->where('status', 'active')
+            ->orWhere('is_active', true)
+            ->orderBy('year', 'desc')
+            ->get();
+            
+        // Get all teams for matchup editing
+        $allTeams = \App\Models\Team::with('league')
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('LiveScoresheet', [
             'selectedGame' => $game,
             'gameState' => $gameState,
+            'leagues' => $leagues,
+            'allTeams' => $allTeams,
             'userRole' => $user->role,
         ]);
     }

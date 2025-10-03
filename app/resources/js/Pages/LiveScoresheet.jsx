@@ -268,24 +268,68 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
 
     const openEditMatchup = () => {
         if (selectedGame) {
+            console.log('Opening edit matchup for game:', selectedGame);
+            
+            // Format date for datetime-local input
+            let formattedDate = '';
+            if (selectedGame.date) {
+                try {
+                    // Convert to ISO string and slice to remove seconds and timezone
+                    const date = new Date(selectedGame.date);
+                    formattedDate = date.toISOString().slice(0, 16);
+                } catch (error) {
+                    console.warn('Error formatting date:', error);
+                    formattedDate = selectedGame.date;
+                }
+            }
+            
             setEditMatchupForm({
-                league_id: selectedGame.league_id || '',
-                team_a_id: selectedGame.team_a_id || '',
-                team_b_id: selectedGame.team_b_id || '',
-                date: selectedGame.date || '',
+                league_id: selectedGame.league_id?.toString() || selectedGame.league?.id?.toString() || '',
+                team_a_id: selectedGame.team_a_id?.toString() || selectedGame.teamA?.id?.toString() || '',
+                team_b_id: selectedGame.team_b_id?.toString() || selectedGame.teamB?.id?.toString() || '',
+                date: formattedDate,
                 venue: selectedGame.venue || ''
             });
+            
+            console.log('Edit form populated with:', {
+                league_id: selectedGame.league_id || selectedGame.league?.id,
+                team_a_id: selectedGame.team_a_id || selectedGame.teamA?.id,
+                team_b_id: selectedGame.team_b_id || selectedGame.teamB?.id,
+                date: formattedDate,
+                venue: selectedGame.venue
+            });
+            
             setShowEditMatchup(true);
         }
     };
 
     const handleEditMatchup = (e) => {
         e.preventDefault();
-        if (!selectedGame) return;
+        if (!selectedGame) {
+            alert('No game selected');
+            return;
+        }
+
+        console.log('Submitting matchup update:', editMatchupForm);
+        console.log('Game ID:', selectedGame.id);
+        console.log('Route URL:', route('scoresheet.update-matchup', selectedGame.id));
+
+        // Basic validation
+        if (!editMatchupForm.team_a_id || !editMatchupForm.team_b_id || !editMatchupForm.date) {
+            alert('Please fill in all required fields (teams and date)');
+            return;
+        }
+
+        if (editMatchupForm.team_a_id === editMatchupForm.team_b_id) {
+            alert('Please select different teams');
+            return;
+        }
 
         router.put(route('scoresheet.update-matchup', selectedGame.id), editMatchupForm, {
             preserveState: true,
-            onSuccess: () => {
+            onSuccess: (response) => {
+                console.log('Matchup updated successfully:', response);
+                alert('Matchup updated successfully!');
                 setShowEditMatchup(false);
                 setEditMatchupForm({
                     league_id: '',
@@ -297,6 +341,22 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             },
             onError: (errors) => {
                 console.error('Error updating matchup:', errors);
+                
+                // Show specific error messages
+                if (errors.error) {
+                    alert('Error: ' + errors.error);
+                } else if (errors.team_a_id || errors.team_b_id) {
+                    alert('Team selection error: ' + (errors.team_a_id?.[0] || errors.team_b_id?.[0] || 'Invalid teams selected'));
+                } else if (errors.date) {
+                    alert('Date error: ' + errors.date[0]);
+                } else if (errors.league_id) {
+                    alert('League error: ' + errors.league_id[0]);
+                } else {
+                    alert('An error occurred while updating the matchup. Check console for details.');
+                }
+            },
+            onFinish: () => {
+                console.log('Matchup update request finished');
             }
         });
     };
@@ -2239,10 +2299,13 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                         value={editMatchupForm.league_id}
                                         onChange={(e) => setEditMatchupForm(prev => ({ ...prev, league_id: e.target.value }))}
                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        required
                                     >
                                         <option value="">Select League</option>
                                         {leagues?.map(league => (
-                                            <option key={league.id} value={league.id}>{league.name}</option>
+                                            <option key={league.id} value={league.id}>
+                                                {league.name} ({league.year || 'Current'})
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -2258,8 +2321,12 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                         required
                                     >
                                         <option value="">Select Team A</option>
-                                        {allTeams?.map(team => (
-                                            <option key={team.id} value={team.id}>{team.name}</option>
+                                        {allTeams?.filter(team => 
+                                            !editMatchupForm.league_id || team.league_id?.toString() === editMatchupForm.league_id
+                                        ).map(team => (
+                                            <option key={team.id} value={team.id}>
+                                                {team.name} {team.league?.name ? `(${team.league.name})` : ''}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -2275,8 +2342,13 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                         required
                                     >
                                         <option value="">Select Team B</option>
-                                        {allTeams?.filter(team => team.id !== editMatchupForm.team_a_id).map(team => (
-                                            <option key={team.id} value={team.id}>{team.name}</option>
+                                        {allTeams?.filter(team => 
+                                            team.id?.toString() !== editMatchupForm.team_a_id && 
+                                            (!editMatchupForm.league_id || team.league_id?.toString() === editMatchupForm.league_id)
+                                        ).map(team => (
+                                            <option key={team.id} value={team.id}>
+                                                {team.name} {team.league?.name ? `(${team.league.name})` : ''}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
