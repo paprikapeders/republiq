@@ -15,8 +15,11 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         team_b_score: 0,
         team_a_fouls: 0,
         team_b_fouls: 0,    
-        team_a_timeouts: 6,
-        team_b_timeouts: 6
+        team_a_timeouts: 2,
+        team_b_timeouts: 2,
+        total_quarters: 4,
+        minutes_per_quarter: 12,
+        timeouts_per_quarter: 2
     });
 
     const [selectedGameId, setSelectedGameId] = useState(selectedGame?.id || '');
@@ -47,6 +50,20 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         venue: ''
     });
     const [isCreatingMatchup, setIsCreatingMatchup] = useState(false);
+    const [showEditMatchup, setShowEditMatchup] = useState(false);
+    const [showGameRules, setShowGameRules] = useState(false);
+    const [gameRules, setGameRules] = useState({
+        total_quarters: 4,
+        minutes_per_quarter: 12,
+        timeouts_per_quarter: 2
+    });
+    const [editMatchupForm, setEditMatchupForm] = useState({
+        league_id: '',
+        team_a_id: '',
+        team_b_id: '',
+        date: '',
+        venue: ''
+    });
 
     // Initialize local stats and active players from server data
     useEffect(() => {
@@ -58,14 +75,41 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             setLocalPlayerStats(statsMap);
         }
         
-        // Initialize active players (starters - first 5 from each team)
+        // Initialize active players from server data or set initial starters
         if (selectedGame?.team_a?.players && selectedGame?.team_b?.players) {
-            const teamAStarters = selectedGame.team_a.players.slice(0, 5).map(p => p.user?.id || p.id);
-            const teamBStarters = selectedGame.team_b.players.slice(0, 5).map(p => p.user?.id || p.id);
-            
-            setActivePlayers({
-                [selectedGame.team_a_id]: teamAStarters,
-                [selectedGame.team_b_id]: teamBStarters
+            setActivePlayers(prev => {
+                const newActivePlayers = { ...prev };
+                
+                console.log('Initializing active players:', {
+                    selectedGameId: selectedGame.id,
+                    teamAActiveFromServer: initialGameState?.team_a_active_players,
+                    teamBActiveFromServer: initialGameState?.team_b_active_players,
+                    currentActivePlayers: prev
+                });
+                
+                // Always use server data if available (to handle page reloads properly)
+                if (initialGameState?.team_a_active_players && initialGameState?.team_a_active_players.length > 0) {
+                    newActivePlayers[selectedGame.team_a_id] = initialGameState.team_a_active_players;
+                    console.log('Using server data for team A:', initialGameState.team_a_active_players);
+                }
+                if (initialGameState?.team_b_active_players && initialGameState?.team_b_active_players.length > 0) {
+                    newActivePlayers[selectedGame.team_b_id] = initialGameState.team_b_active_players;
+                    console.log('Using server data for team B:', initialGameState.team_b_active_players);
+                }
+                
+                // Only set initial starters if no server data and no current data
+                if (!newActivePlayers[selectedGame.team_a_id]) {
+                    const teamAStarters = selectedGame.team_a.players.slice(0, 5).map(p => p.user?.id || p.id);
+                    newActivePlayers[selectedGame.team_a_id] = teamAStarters;
+                    console.log('Setting initial starters for team A:', teamAStarters);
+                }
+                if (!newActivePlayers[selectedGame.team_b_id]) {
+                    const teamBStarters = selectedGame.team_b.players.slice(0, 5).map(p => p.user?.id || p.id);
+                    newActivePlayers[selectedGame.team_b_id] = teamBStarters;
+                    console.log('Setting initial starters for team B:', teamBStarters);
+                }
+                
+                return newActivePlayers;
             });
         }
     }, [selectedGame]);
@@ -106,7 +150,14 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         setGameState(newGameState);
         
         if (selectedGame) {
-            router.post(route('scoresheet.update-state', selectedGame.id), newGameState, {
+            // Include active players in the update
+            const gameUpdateData = {
+                ...newGameState,
+                team_a_active_players: activePlayers[selectedGame.team_a_id] || [],
+                team_b_active_players: activePlayers[selectedGame.team_b_id] || []
+            };
+            
+            router.post(route('scoresheet.update-state', selectedGame.id), gameUpdateData, {
                 preserveState: true,
                 preserveScroll: true,
                 onSuccess: () => {
@@ -126,20 +177,27 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
 
     const resetClock = () => {
+        const minutesPerQuarter = gameState.minutes_per_quarter || gameRules.minutes_per_quarter;
         updateGameState({ 
-            time_remaining: 12 * 60, 
+            time_remaining: minutesPerQuarter * 60, 
             is_running: false 
         });
     };
 
     const nextQuarter = () => {
-        if (gameState.quarter < 4) {
+        const totalQuarters = gameState.total_quarters || gameRules.total_quarters;
+        const minutesPerQuarter = gameState.minutes_per_quarter || gameRules.minutes_per_quarter;
+        const timeoutsPerQuarter = gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter;
+        
+        if (gameState.quarter < totalQuarters) {
             updateGameState({
                 quarter: gameState.quarter + 1,
-                time_remaining: 12 * 60,
+                time_remaining: minutesPerQuarter * 60,
                 is_running: false,
                 team_a_fouls: 0,
-                team_b_fouls: 0
+                team_b_fouls: 0,
+                team_a_timeouts: timeoutsPerQuarter,
+                team_b_timeouts: timeoutsPerQuarter
             });
         }
     };
@@ -153,7 +211,99 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 [timeoutField]: currentTimeouts - 1,
                 is_running: false
             });
+            
+            // Track timeout action for undo
+            const action = {
+                id: `timeout-${Date.now()}`,
+                type: 'timeout',
+                team: team,
+                timestamp: Date.now(),
+                quarter: gameState.quarter,
+                gameTime: formatTime(gameState.time_remaining)
+            };
+            
+            setActionHistory(prev => ({
+                ...prev,
+                [`team_${team}_timeout`]: [...(prev[`team_${team}_timeout`] || []), action]
+            }));
+            
+            setHasUnsavedChanges(true);
         }
+    };
+    
+    const undoTimeout = (team) => {
+        const timeoutField = team === 'a' ? 'team_a_timeouts' : 'team_b_timeouts';
+        const actionKey = `team_${team}_timeout`;
+        const timeoutActions = actionHistory[actionKey] || [];
+        const maxTimeouts = gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter;
+        
+        if (timeoutActions.length > 0 && gameState[timeoutField] < maxTimeouts) {
+            setGameState(prev => ({
+                ...prev,
+                [timeoutField]: prev[timeoutField] + 1
+            }));
+            
+            // Remove last timeout action
+            setActionHistory(prev => ({
+                ...prev,
+                [actionKey]: timeoutActions.slice(0, -1)
+            }));
+            
+            setHasUnsavedChanges(true);
+        }
+    };
+
+    const openEditMatchup = () => {
+        if (selectedGame) {
+            setEditMatchupForm({
+                league_id: selectedGame.league_id || '',
+                team_a_id: selectedGame.team_a_id || '',
+                team_b_id: selectedGame.team_b_id || '',
+                date: selectedGame.date || '',
+                venue: selectedGame.venue || ''
+            });
+            setShowEditMatchup(true);
+        }
+    };
+
+    const handleEditMatchup = (e) => {
+        e.preventDefault();
+        if (!selectedGame) return;
+
+        router.put(route('scoresheet.update-matchup', selectedGame.id), editMatchupForm, {
+            preserveState: true,
+            onSuccess: () => {
+                setShowEditMatchup(false);
+                setEditMatchupForm({
+                    league_id: '',
+                    team_a_id: '',
+                    team_b_id: '',
+                    date: '',
+                    venue: ''
+                });
+            },
+            onError: (errors) => {
+                console.error('Error updating matchup:', errors);
+            }
+        });
+    };
+
+    const applyGameRules = () => {
+        const minutesPerQuarter = gameRules.minutes_per_quarter;
+        const timeoutsPerQuarter = gameRules.timeouts_per_quarter;
+        
+        setGameState(prev => ({
+            ...prev,
+            time_remaining: minutesPerQuarter * 60,
+            total_quarters: gameRules.total_quarters,
+            minutes_per_quarter: minutesPerQuarter,
+            timeouts_per_quarter: timeoutsPerQuarter,
+            team_a_timeouts: timeoutsPerQuarter,
+            team_b_timeouts: timeoutsPerQuarter
+        }));
+        
+        setShowGameRules(false);
+        setHasUnsavedChanges(true);
     };
 
     const recordFieldGoal = (playerId, points, made) => {
@@ -265,6 +415,21 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             return { ...prev, [playerId]: updatedStats };
         });
         
+        // Update team fouls when a player foul is added
+        if (statType === 'fouls' && value > 0) {
+            const player = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])]
+                .find(p => (p.user?.id || p.id) === playerId);
+            
+            if (player) {
+                const isTeamA = selectedGame.team_a?.players?.some(p => (p.user?.id || p.id) === playerId);
+                setGameState(prev => ({
+                    ...prev,
+                    team_a_fouls: isTeamA ? prev.team_a_fouls + value : prev.team_a_fouls,
+                    team_b_fouls: !isTeamA ? prev.team_b_fouls + value : prev.team_b_fouls
+                }));
+            }
+        }
+        
         // Track action history for individual undo
         const action = {
             id: `action-${Date.now()}`,
@@ -290,12 +455,18 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         setIsSaving(true);
         
         try {
-            // Save game state
-            router.post(route('scoresheet.update-state', selectedGame.id), gameState, {
+            // Save game state with active players
+            const gameUpdateData = {
+                ...gameState,
+                team_a_active_players: activePlayers[selectedGame.team_a_id] || [],
+                team_b_active_players: activePlayers[selectedGame.team_b_id] || []
+            };
+            
+            router.post(route('scoresheet.update-state', selectedGame.id), gameUpdateData, {
                 preserveState: true,
                 preserveScroll: true,
                 onSuccess: () => {
-                    console.log('Game state saved successfully');
+                    console.log('Game state and active players saved successfully');
                 },
                 onError: (errors) => {
                     console.error('Error saving game state:', errors);
@@ -402,6 +573,9 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         setSubstitutions(prev => [...prev, newSub]);
         setHasUnsavedChanges(true);
         
+        // Save active players to database
+        saveActivePlayers();
+        
         setShowSubDialog(false);
         setPlayerOut('');
         setPlayerIn('');
@@ -461,11 +635,35 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         setSubstitutions(prev => [...prev, ...newSubs]);
         setHasUnsavedChanges(true);
         
+        // Save active players to database
+        saveActivePlayers();
+        
         // Reset dialog
         setShowSubDialog(false);
         setMultipleSubstitutions([]);
         setIsMultipleSubMode(false);
         setSelectedTeamForSub('');
+    };
+    
+    const saveActivePlayers = () => {
+        if (selectedGame) {
+            const gameUpdateData = {
+                ...gameState,
+                team_a_active_players: activePlayers[selectedGame.team_a_id] || [],
+                team_b_active_players: activePlayers[selectedGame.team_b_id] || []
+            };
+            
+            router.post(route('scoresheet.update-state', selectedGame.id), gameUpdateData, {
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    console.log('Active players saved successfully');
+                },
+                onError: (errors) => {
+                    console.error('Error saving active players:', errors);
+                }
+            });
+        }
     };
     
     const addSubstitutionPair = () => {
@@ -727,8 +925,10 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         
         return (
             <tr className={`border-b hover:bg-gray-50 ${teamColor}`}>
-                <td className="px-1 py-1 text-center font-mono font-bold text-xs border-r">#{player.number || '00'}</td>
-                <td className="px-2 py-1 font-medium text-xs border-r max-w-[120px] truncate" title={player.user?.name || player.name}>{player.user?.name || player.name}</td>
+                <td className="px-1 py-1 text-center font-mono font-bold text-xs border-r">{player.jersey_number || player.number || '00'}</td>
+                <td className="px-2 py-1 font-medium text-xs border-r max-w-[80px] truncate" title={player.user?.name || player.name}>
+                    {(player.user?.name || player.name)?.split(' ').pop() || 'Unknown'}
+                </td>
                 <td className="px-1 py-1 text-center font-bold text-lg border-r">{stats?.points || 0}</td>
                 <td className="px-1 py-1 text-center text-xs border-r">
                     {stats?.field_goals_made || 0}/{stats?.field_goals_attempted || 0}
@@ -742,6 +942,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 <td className="px-1 py-1 text-center text-xs border-r">{stats?.assists || 0}</td>
                 <td className="px-1 py-1 text-center text-xs border-r">{stats?.rebounds || 0}</td>
                 <td className="px-1 py-1 text-center text-xs border-r">{stats?.steals || 0}</td>
+                <td className="px-1 py-1 text-center text-xs border-r">{stats?.blocks || 0}</td>
                 <td className="px-1 py-1 text-center text-xs border-r">{stats?.fouls || 0}</td>
                 <td className="px-1 py-1 border-r">
                     <div className="flex gap-0.5 justify-center">
@@ -798,7 +999,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                     </div>
                 </td>
                 <td className="px-1 py-1 border-r">
-                    <div className="grid grid-cols-2 gap-0.5">
+                    <div className="grid grid-cols-3 gap-0.5">
                         <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'assists', 1)}
                             className="bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800 text-xs"
@@ -814,19 +1015,27 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             R+
                         </QuickButton>
                         <QuickButton
-                            onClick={() => updatePlayerStat(playerId, 'fouls', 1)}
-                            className="bg-red-100 hover:bg-red-200 border-red-300 text-red-800 text-xs"
-                            compact
-                        >
-                            F+
-                        </QuickButton>
-                        <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'steals', 1)}
                             className="bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-800 text-xs"
                             compact
                         >
                             S+
                         </QuickButton>
+                        <QuickButton
+                            onClick={() => updatePlayerStat(playerId, 'blocks', 1)}
+                            className="bg-green-100 hover:bg-green-200 border-green-300 text-green-800 text-xs"
+                            compact
+                        >
+                            B+
+                        </QuickButton>
+                        <QuickButton
+                            onClick={() => updatePlayerStat(playerId, 'fouls', 1)}
+                            className="bg-red-100 hover:bg-red-200 border-red-300 text-red-800 text-xs"
+                            compact
+                        >
+                            F+
+                        </QuickButton>
+                        <div></div>
                     </div>
                 </td>
                 <td className="px-1 py-1 text-center">
@@ -1253,7 +1462,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                     </div>
                                     {gameState.is_running && <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>}
                                 </div>
-                                <div className="flex justify-center gap-1 flex-wrap">
+                                <div className="flex justify-center gap-3 flex-wrap">
                                     <button
                                         onClick={toggleGameClock}
                                         className={`px-2 py-1 rounded text-xs font-medium ${
@@ -1270,7 +1479,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                     >
                                         <RotateCcw className="h-3 w-3 inline mr-1" />Reset
                                     </button>
-                                    {gameState.quarter < 4 && (
+                                    {gameState.quarter < (gameState.total_quarters || gameRules.total_quarters) && (
                                         <button
                                             onClick={nextQuarter}
                                             className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
@@ -1279,21 +1488,57 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                         </button>
                                     )}
                                 </div>
-                                <div className="flex justify-center gap-1 mt-1 flex-wrap">
+                                <div className="flex justify-center gap-2 mt-2 flex-wrap">
                                     <button
-                                        onClick={() => useTimeout('a')}
-                                        disabled={gameState.team_a_timeouts <= 0}
-                                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-1 py-0.5 rounded text-xs"
+                                        onClick={openEditMatchup}
+                                        className="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs"
+                                        title="Edit Matchup Details"
                                     >
-                                        A-TO({gameState.team_a_timeouts})
+                                        Edit Matchup
                                     </button>
                                     <button
-                                        onClick={() => useTimeout('b')}
-                                        disabled={gameState.team_b_timeouts <= 0}
-                                        className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-1 py-0.5 rounded text-xs"
+                                        onClick={() => setShowGameRules(true)}
+                                        className="bg-indigo-500 hover:bg-indigo-600 text-white px-2 py-1 rounded text-xs"
+                                        title="Configure Game Rules"
                                     >
-                                        B-TO({gameState.team_b_timeouts})
+                                        Game Rules
                                     </button>
+                                </div>
+                                <div className="flex justify-center gap-2 mt-2 flex-wrap">
+                                    <div className="flex gap-0.5">
+                                        <button
+                                            onClick={() => useTimeout('a')}
+                                            disabled={gameState.team_a_timeouts <= 0}
+                                            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-1 py-0.5 rounded text-xs"
+                                        >
+                                            A-TO({gameState.team_a_timeouts})
+                                        </button>
+                                        <button
+                                            onClick={() => undoTimeout('a')}
+                                            disabled={!actionHistory[`team_a_timeout`] || actionHistory[`team_a_timeout`].length === 0 || gameState.team_a_timeouts >= (gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter)}
+                                            className="bg-blue-400 hover:bg-blue-500 disabled:bg-gray-300 text-white px-1 py-0.5 rounded text-xs"
+                                            title="Undo timeout"
+                                        >
+                                            ↶
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-0.5">
+                                        <button
+                                            onClick={() => useTimeout('b')}
+                                            disabled={gameState.team_b_timeouts <= 0}
+                                            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-1 py-0.5 rounded text-xs"
+                                        >
+                                            B-TO({gameState.team_b_timeouts})
+                                        </button>
+                                        <button
+                                            onClick={() => undoTimeout('b')}
+                                            disabled={!actionHistory[`team_b_timeout`] || actionHistory[`team_b_timeout`].length === 0 || gameState.team_b_timeouts >= (gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter)}
+                                            className="bg-green-400 hover:bg-green-500 disabled:bg-gray-300 text-white px-1 py-0.5 rounded text-xs"
+                                            title="Undo timeout"
+                                        >
+                                            ↶
+                                        </button>
+                                    </div>
                                     <button
                                         onClick={() => openActivePlayersModal(selectedGame.team_a_id)}
                                         className="bg-blue-500 hover:bg-blue-600 text-white px-1 py-0.5 rounded text-xs"
@@ -1305,18 +1550,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                         className="bg-green-500 hover:bg-green-600 text-white px-1 py-0.5 rounded text-xs"
                                     >
                                         Sub-B
-                                    </button>
-                                    <button
-                                        onClick={() => openSubDialog(selectedGame.team_a_id, false)}
-                                        className="bg-blue-400 hover:bg-blue-500 text-white px-1 py-0.5 rounded text-xs"
-                                    >
-                                        A-Sub
-                                    </button>
-                                    <button
-                                        onClick={() => openSubDialog(selectedGame.team_b_id, false)}
-                                        className="bg-green-400 hover:bg-green-500 text-white px-1 py-0.5 rounded text-xs"
-                                    >
-                                        B-Sub
                                     </button>
                                 </div>
                             </div>
@@ -1751,7 +1984,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-100">
                                     <tr>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">#</th>
+                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">JER</th>
                                         <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-r">PLAYER</th>
                                         <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">PTS</th>
                                         <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">FG</th>
@@ -1760,6 +1993,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                         <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">A</th>
                                         <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">R</th>
                                         <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">S</th>
+                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">B</th>
                                         <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">F</th>
                                         <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">2PT</th>
                                         <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">3PT</th>
@@ -1941,6 +2175,198 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Matchup Modal */}
+            {showEditMatchup && selectedGame && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Matchup</h3>
+                        
+                        <form onSubmit={handleEditMatchup}>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        League
+                                    </label>
+                                    <select
+                                        value={editMatchupForm.league_id}
+                                        onChange={(e) => setEditMatchupForm(prev => ({ ...prev, league_id: e.target.value }))}
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    >
+                                        <option value="">Select League</option>
+                                        {leagues?.map(league => (
+                                            <option key={league.id} value={league.id}>{league.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Team A
+                                    </label>
+                                    <select
+                                        value={editMatchupForm.team_a_id}
+                                        onChange={(e) => setEditMatchupForm(prev => ({ ...prev, team_a_id: e.target.value }))}
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        required
+                                    >
+                                        <option value="">Select Team A</option>
+                                        {allTeams?.map(team => (
+                                            <option key={team.id} value={team.id}>{team.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Team B
+                                    </label>
+                                    <select
+                                        value={editMatchupForm.team_b_id}
+                                        onChange={(e) => setEditMatchupForm(prev => ({ ...prev, team_b_id: e.target.value }))}
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        required
+                                    >
+                                        <option value="">Select Team B</option>
+                                        {allTeams?.filter(team => team.id !== editMatchupForm.team_a_id).map(team => (
+                                            <option key={team.id} value={team.id}>{team.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Date & Time
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        value={editMatchupForm.date}
+                                        onChange={(e) => setEditMatchupForm(prev => ({ ...prev, date: e.target.value }))}
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Venue
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editMatchupForm.venue}
+                                        onChange={(e) => setEditMatchupForm(prev => ({ ...prev, venue: e.target.value }))}
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        placeholder="e.g. Municipal Gym, Court 1"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="flex gap-2 mt-6">
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-medium"
+                                >
+                                    Update Matchup
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditMatchup(false)}
+                                    className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded font-medium"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Game Rules Modal */}
+            {showGameRules && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">Configure Game Rules</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Set the game format and timing rules. Changes will apply to the current game.
+                        </p>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Total Quarters
+                                </label>
+                                <select
+                                    value={gameRules.total_quarters}
+                                    onChange={(e) => setGameRules(prev => ({ ...prev, total_quarters: parseInt(e.target.value) }))}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    <option value={2}>2 Quarters</option>
+                                    <option value={4}>4 Quarters</option>
+                                    <option value={6}>6 Quarters</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Minutes per Quarter
+                                </label>
+                                <select
+                                    value={gameRules.minutes_per_quarter}
+                                    onChange={(e) => setGameRules(prev => ({ ...prev, minutes_per_quarter: parseInt(e.target.value) }))}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    <option value={5}>5 Minutes</option>
+                                    <option value={8}>8 Minutes</option>
+                                    <option value={10}>10 Minutes</option>
+                                    <option value={12}>12 Minutes</option>
+                                    <option value={15}>15 Minutes</option>
+                                    <option value={20}>20 Minutes</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Timeouts per Quarter
+                                </label>
+                                <select
+                                    value={gameRules.timeouts_per_quarter}
+                                    onChange={(e) => setGameRules(prev => ({ ...prev, timeouts_per_quarter: parseInt(e.target.value) }))}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    <option value={1}>1 Timeout</option>
+                                    <option value={2}>2 Timeouts</option>
+                                    <option value={3}>3 Timeouts</option>
+                                    <option value={4}>4 Timeouts</option>
+                                </select>
+                            </div>
+
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4">
+                                <p className="text-sm text-yellow-800">
+                                    <strong>Current Settings:</strong><br/>
+                                    Q{gameState.quarter} of {gameState.total_quarters || gameRules.total_quarters} | 
+                                    {gameState.minutes_per_quarter || gameRules.minutes_per_quarter}min quarters | 
+                                    {gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter} timeouts/quarter
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex gap-2 mt-6">
+                            <button
+                                onClick={applyGameRules}
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded font-medium"
+                            >
+                                Apply Rules
+                            </button>
+                            <button
+                                onClick={() => setShowGameRules(false)}
+                                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded font-medium"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

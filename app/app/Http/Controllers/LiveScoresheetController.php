@@ -73,8 +73,13 @@ class LiveScoresheetController extends Controller
             'team_b_score' => $game->team_b_score ?: 0,
             'team_a_fouls' => $game->team_a_fouls ?: 0,
             'team_b_fouls' => $game->team_b_fouls ?: 0,
-            'team_a_timeouts' => $game->team_a_timeouts ?: 6,
-            'team_b_timeouts' => $game->team_b_timeouts ?: 6,
+            'team_a_timeouts' => $game->team_a_timeouts ?: ($game->timeouts_per_quarter * ($game->total_quarters ?: 4)) ?: 6,
+            'team_b_timeouts' => $game->team_b_timeouts ?: ($game->timeouts_per_quarter * ($game->total_quarters ?: 4)) ?: 6,
+            'team_a_active_players' => $game->team_a_active_players,
+            'team_b_active_players' => $game->team_b_active_players,
+            'total_quarters' => $game->total_quarters ?: 4,
+            'minutes_per_quarter' => $game->minutes_per_quarter ?: 12,
+            'timeouts_per_quarter' => $game->timeouts_per_quarter ?: 2,
         ];
         
         return Inertia::render('LiveScoresheet', [
@@ -102,9 +107,13 @@ class LiveScoresheetController extends Controller
             'team_b_fouls' => 'integer|min:0',
             'team_a_timeouts' => 'integer|min:0|max:6',
             'team_b_timeouts' => 'integer|min:0|max:6',
+            'team_a_active_players' => 'array|nullable',
+            'team_b_active_players' => 'array|nullable',
+            'team_a_active_players.*' => 'integer|exists:users,id',
+            'team_b_active_players.*' => 'integer|exists:users,id',
         ]);
         
-        $game->update([
+        $updateData = [
             'current_quarter' => isset($validated['quarter']) ? $validated['quarter'] : $game->current_quarter,
             'time_remaining' => isset($validated['time_remaining']) ? $validated['time_remaining'] : $game->time_remaining,
             'status' => $validated['is_running'] ? 'in_progress' : ($game->status === 'in_progress' ? 'scheduled' : $game->status),
@@ -114,7 +123,17 @@ class LiveScoresheetController extends Controller
             'team_b_fouls' => isset($validated['team_b_fouls']) ? $validated['team_b_fouls'] : $game->team_b_fouls,
             'team_a_timeouts' => isset($validated['team_a_timeouts']) ? $validated['team_a_timeouts'] : $game->team_a_timeouts,
             'team_b_timeouts' => isset($validated['team_b_timeouts']) ? $validated['team_b_timeouts'] : $game->team_b_timeouts,
-        ]);
+        ];
+        
+        // Add active players if provided
+        if (isset($validated['team_a_active_players'])) {
+            $updateData['team_a_active_players'] = $validated['team_a_active_players'];
+        }
+        if (isset($validated['team_b_active_players'])) {
+            $updateData['team_b_active_players'] = $validated['team_b_active_players'];
+        }
+        
+        $game->update($updateData);
         
         return redirect()->back()->with('success', 'Game state updated successfully.');
     }
@@ -293,10 +312,51 @@ class LiveScoresheetController extends Controller
             'time_remaining' => 12 * 60,
             'team_a_fouls' => 0,
             'team_b_fouls' => 0,
-            'team_a_timeouts' => 6,
-            'team_b_timeouts' => 6,
+            'team_a_timeouts' => 2,
+            'team_b_timeouts' => 2,
+            'total_quarters' => 4,
+            'minutes_per_quarter' => 12,
+            'timeouts_per_quarter' => 2,
         ]);
         
         return redirect()->route('scoresheet.index')->with('success', 'Matchup created successfully!');
+    }
+
+    public function updateMatchup(Request $request, Game $game)
+    {
+        $user = Auth::user();
+        
+        // Only admins and coaches can edit matchups
+        if (!in_array($user->role, ['admin', 'coach'])) {
+            return redirect()->back()->withErrors(['error' => 'Unauthorized action.']);
+        }
+        
+        $validated = $request->validate([
+            'league_id' => 'nullable|exists:leagues,id',
+            'team_a_id' => 'required|exists:teams,id',
+            'team_b_id' => 'required|exists:teams,id|different:team_a_id',
+            'date' => 'required|date',
+            'venue' => 'nullable|string|max:255',
+        ]);
+        
+        // Validate teams belong to selected league if league is specified
+        if ($validated['league_id']) {
+            $teamA = Team::find($validated['team_a_id']);
+            $teamB = Team::find($validated['team_b_id']);
+            
+            if ($teamA->league_id !== (int)$validated['league_id'] || $teamB->league_id !== (int)$validated['league_id']) {
+                return redirect()->back()->withErrors(['error' => 'Both teams must belong to the selected league.']);
+            }
+        }
+        
+        $game->update([
+            'league_id' => $validated['league_id'],
+            'team_a_id' => $validated['team_a_id'],
+            'team_b_id' => $validated['team_b_id'],
+            'date' => $validated['date'],
+            'venue' => $validated['venue'],
+        ]);
+        
+        return redirect()->back()->with('success', 'Matchup updated successfully!');
     }
 }

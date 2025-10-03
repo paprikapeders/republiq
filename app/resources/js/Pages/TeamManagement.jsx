@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Plus, Users, Copy, Check, X, Trophy, AlertCircle, UserPlus, Settings } from 'lucide-react';
+import { Plus, Users, Copy, Check, X, Trophy, AlertCircle, UserPlus, Settings, Edit } from 'lucide-react';
 
 export default function TeamManagement({ auth, teams, teamMembers, userRole, flash, leagues = [], allUsers = [] }) {
     const [copied, setCopied] = useState(false);
@@ -11,6 +11,8 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
     const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState(null);
     const [removePlayerDialogOpen, setRemovePlayerDialogOpen] = useState(false);
     const [selectedPlayerToRemove, setSelectedPlayerToRemove] = useState(null);
+    const [editPlayerDialogOpen, setEditPlayerDialogOpen] = useState(false);
+    const [selectedPlayerToEdit, setSelectedPlayerToEdit] = useState(null);
     const [createNewPlayer, setCreateNewPlayer] = useState(false);
 
     const createTeamForm = useForm({
@@ -33,6 +35,14 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
         email: '',
         phone: '',
         create_new: false,
+    });
+
+    const editPlayerForm = useForm({
+        name: '',
+        email: '',
+        phone: '',
+        jersey_number: '',
+        position: '',
     });
 
     const handleCreateTeam = (e) => {
@@ -104,6 +114,29 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
     const openRemovePlayerDialog = (player) => {
         setSelectedPlayerToRemove(player);
         setRemovePlayerDialogOpen(true);
+    };
+
+    const handleEditPlayer = (e) => {
+        e.preventDefault();
+        editPlayerForm.put(route('admin.teams.update-player', selectedPlayerToEdit.id), {
+            onSuccess: () => {
+                editPlayerForm.reset();
+                setEditPlayerDialogOpen(false);
+                setSelectedPlayerToEdit(null);
+            },
+        });
+    };
+
+    const openEditPlayerDialog = (player) => {
+        setSelectedPlayerToEdit(player);
+        editPlayerForm.setData({
+            name: player.user.name,
+            email: player.user.email,
+            phone: player.user.phone || '',
+            jersey_number: player.jersey_number || '',
+            position: player.position || '',
+        });
+        setEditPlayerDialogOpen(true);
     };
 
     // Filter users to show only players not already in the selected team
@@ -353,13 +386,22 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                                                     </span>
                                                                 </div>
                                                                 {userRole === 'admin' && (
-                                                                    <button
-                                                                        onClick={() => openRemovePlayerDialog(player)}
-                                                                        className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors ml-2"
-                                                                        title="Remove Player"
-                                                                    >
-                                                                        <X className="h-4 w-4" />
-                                                                    </button>
+                                                                    <div className="flex gap-1">
+                                                                        <button
+                                                                            onClick={() => openEditPlayerDialog(player)}
+                                                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                            title="Edit Player"
+                                                                        >
+                                                                            <Edit className="h-4 w-4" />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => openRemovePlayerDialog(player)}
+                                                                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                            title="Remove Player"
+                                                                        >
+                                                                            <X className="h-4 w-4" />
+                                                                        </button>
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -796,6 +838,135 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                 Remove Player
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Player Modal (Admin Only) */}
+            {editPlayerDialogOpen && userRole === 'admin' && selectedPlayerToEdit && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Player Details</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Update information for <strong>{selectedPlayerToEdit.user?.name}</strong>
+                        </p>
+                        
+                        <form onSubmit={handleEditPlayer}>
+                            <div className="mb-4">
+                                <label htmlFor="editPlayerName" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Player Name *
+                                </label>
+                                <input
+                                    id="editPlayerName"
+                                    type="text"
+                                    placeholder="Enter player's full name"
+                                    value={editPlayerForm.data.name}
+                                    onChange={e => editPlayerForm.setData('name', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    required
+                                />
+                                {editPlayerForm.errors.name && (
+                                    <p className="text-red-600 text-xs mt-1">{editPlayerForm.errors.name}</p>
+                                )}
+                            </div>
+
+                            <div className="mb-4">
+                                <label htmlFor="editPlayerEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Email Address *
+                                </label>
+                                <input
+                                    id="editPlayerEmail"
+                                    type="email"
+                                    placeholder="Enter player's email"
+                                    value={editPlayerForm.data.email}
+                                    onChange={e => editPlayerForm.setData('email', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    required
+                                />
+                                {editPlayerForm.errors.email && (
+                                    <p className="text-red-600 text-xs mt-1">{editPlayerForm.errors.email}</p>
+                                )}
+                            </div>
+
+                            <div className="mb-4">
+                                <label htmlFor="editPlayerPhone" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Phone Number (Optional)
+                                </label>
+                                <input
+                                    id="editPlayerPhone"
+                                    type="tel"
+                                    placeholder="Enter player's phone number"
+                                    value={editPlayerForm.data.phone}
+                                    onChange={e => editPlayerForm.setData('phone', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                {editPlayerForm.errors.phone && (
+                                    <p className="text-red-600 text-xs mt-1">{editPlayerForm.errors.phone}</p>
+                                )}
+                            </div>
+
+                            <div className="mb-4">
+                                <label htmlFor="editJerseyNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Jersey Number (Optional)
+                                </label>
+                                <input
+                                    id="editJerseyNumber"
+                                    type="number"
+                                    placeholder="Enter jersey number"
+                                    value={editPlayerForm.data.jersey_number}
+                                    onChange={e => editPlayerForm.setData('jersey_number', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    min="0"
+                                    max="99"
+                                />
+                                {editPlayerForm.errors.jersey_number && (
+                                    <p className="text-red-600 text-xs mt-1">{editPlayerForm.errors.jersey_number}</p>
+                                )}
+                            </div>
+
+                            <div className="mb-4">
+                                <label htmlFor="editPosition" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Position (Optional)
+                                </label>
+                                <select
+                                    id="editPosition"
+                                    value={editPlayerForm.data.position}
+                                    onChange={e => editPlayerForm.setData('position', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">Select position</option>
+                                    <option value="Point Guard">Point Guard</option>
+                                    <option value="Shooting Guard">Shooting Guard</option>
+                                    <option value="Small Forward">Small Forward</option>
+                                    <option value="Power Forward">Power Forward</option>
+                                    <option value="Center">Center</option>
+                                </select>
+                                {editPlayerForm.errors.position && (
+                                    <p className="text-red-600 text-xs mt-1">{editPlayerForm.errors.position}</p>
+                                )}
+                            </div>
+                            
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEditPlayerDialogOpen(false);
+                                        setSelectedPlayerToEdit(null);
+                                        editPlayerForm.reset();
+                                    }}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={editPlayerForm.processing}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                                >
+                                    {editPlayerForm.processing ? 'Updating...' : 'Update Player'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

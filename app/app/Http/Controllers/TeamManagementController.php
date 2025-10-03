@@ -328,4 +328,39 @@ class TeamManagementController extends Controller
         
         return redirect()->back()->with('success', $playerName . ' removed from ' . $teamName . '.');
     }
+
+    /**
+     * Update a player's details (admin only).
+     */
+    public function updatePlayer(Request $request, Player $player)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'admin') {
+            return redirect()->back()->withErrors(['error' => 'Unauthorized action.']);
+        }
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $player->user->id,
+            'phone' => 'nullable|string|max:20',
+            'jersey_number' => 'nullable|integer|min:0|max:99',
+            'position' => 'nullable|string|max:255',
+        ]);
+        
+        // Update user information
+        $player->user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+        ]);
+        
+        // Update player-specific information
+        $player->update([
+            'jersey_number' => $request->filled('jersey_number') ? $request->jersey_number : null,
+            'position' => $request->filled('position') ? $request->position : null,
+        ]);
+        
+        return redirect()->back()->with('success', 'Player details updated successfully!');
+    }
 }

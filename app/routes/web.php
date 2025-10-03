@@ -62,12 +62,14 @@ Route::middleware('auth')->group(function () {
     Route::middleware('admin')->group(function () {
         Route::post('/admin/teams/add-player', [TeamManagementController::class, 'addPlayerToTeam'])->name('admin.teams.add-player');
         Route::delete('/admin/teams/remove-player/{player}', [TeamManagementController::class, 'adminRemovePlayer'])->name('admin.teams.remove-player');
+        Route::put('/admin/teams/update-player/{player}', [TeamManagementController::class, 'updatePlayer'])->name('admin.teams.update-player');
     });
     
     // Live Scoresheet Routes
     Route::get('/scoresheet', [LiveScoresheetController::class, 'index'])->name('scoresheet.index');
     Route::post('/scoresheet/create-matchup', [LiveScoresheetController::class, 'createMatchup'])->name('scoresheet.create-matchup');
     Route::get('/scoresheet/{game}', [LiveScoresheetController::class, 'show'])->name('scoresheet.show');
+    Route::put('/scoresheet/{game}/update-matchup', [LiveScoresheetController::class, 'updateMatchup'])->name('scoresheet.update-matchup');
     Route::post('/scoresheet/{game}/update-state', [LiveScoresheetController::class, 'updateGameState'])->name('scoresheet.update-state');
     Route::post('/scoresheet/{game}/field-goal', [LiveScoresheetController::class, 'recordFieldGoal'])->name('scoresheet.record-field-goal');
     Route::post('/scoresheet/{game}/stat', [LiveScoresheetController::class, 'recordPlayerStat'])->name('scoresheet.record-stat');

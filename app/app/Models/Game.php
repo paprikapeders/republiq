@@ -11,7 +11,9 @@ class Game extends Model {
     protected $fillable = [
         'league_id', 'team_a_id', 'team_b_id', 'date', 'venue', 'status', 
         'team_a_score', 'team_b_score', 'current_quarter', 'time_remaining',
-        'team_a_fouls', 'team_b_fouls', 'team_a_timeouts', 'team_b_timeouts'
+        'team_a_fouls', 'team_b_fouls', 'team_a_timeouts', 'team_b_timeouts',
+        'team_a_active_players', 'team_b_active_players',
+        'total_quarters', 'minutes_per_quarter', 'timeouts_per_quarter'
     ];
 
     protected $casts = [
@@ -24,6 +26,11 @@ class Game extends Model {
         'team_b_fouls' => 'integer',
         'team_a_timeouts' => 'integer',
         'team_b_timeouts' => 'integer',
+        'team_a_active_players' => 'array',
+        'team_b_active_players' => 'array',
+        'total_quarters' => 'integer',
+        'minutes_per_quarter' => 'integer',
+        'timeouts_per_quarter' => 'integer',
     ];
 
     public function league()
