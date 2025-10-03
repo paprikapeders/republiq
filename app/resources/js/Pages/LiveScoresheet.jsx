@@ -26,6 +26,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     const [localPlayerStats, setLocalPlayerStats] = useState({});
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isSavingSubstitution, setIsSavingSubstitution] = useState(false);
     const [activePlayers, setActivePlayers] = useState({});
     const [substitutions, setSubstitutions] = useState([]);
     const [showSubDialog, setShowSubDialog] = useState(false);
@@ -157,17 +158,29 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 team_b_active_players: activePlayers[selectedGame.team_b_id] || []
             };
             
-            router.post(route('scoresheet.update-state', selectedGame.id), gameUpdateData, {
-                preserveState: true,
-                preserveScroll: true,
-                onSuccess: () => {
-                    // Game state updated successfully
+            // Use fetch to avoid page reload (non-blocking)
+            fetch(route('scoresheet.update-state', selectedGame.id), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json',
                 },
-                onError: (errors) => {
-                    console.error('Error updating game state:', errors);
+                body: JSON.stringify(gameUpdateData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Game state updated successfully (no reload)');
+                } else {
+                    console.error('Error updating game state:', response.statusText);
                     // Revert local state on error
                     setGameState(gameState);
                 }
+            })
+            .catch(error => {
+                console.error('Error updating game state:', error);
+                // Revert local state on error
+                setGameState(gameState);
             });
         }
     };
@@ -573,13 +586,14 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         setSubstitutions(prev => [...prev, newSub]);
         setHasUnsavedChanges(true);
         
-        // Save active players to database
-        saveActivePlayers();
-        
+        // Close dialog first for immediate UI feedback
         setShowSubDialog(false);
         setPlayerOut('');
         setPlayerIn('');
         setSelectedTeamForSub('');
+        
+        // Auto-save active players to database without page reload (non-blocking)
+        saveActivePlayers();
     };
     
     const makeMultipleSubstitutions = () => {
@@ -635,33 +649,48 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         setSubstitutions(prev => [...prev, ...newSubs]);
         setHasUnsavedChanges(true);
         
-        // Save active players to database
-        saveActivePlayers();
-        
-        // Reset dialog
+        // Reset dialog first for immediate UI feedback
         setShowSubDialog(false);
         setMultipleSubstitutions([]);
         setIsMultipleSubMode(false);
         setSelectedTeamForSub('');
+        
+        // Auto-save active players to database without page reload (non-blocking)
+        saveActivePlayers();
     };
     
     const saveActivePlayers = () => {
         if (selectedGame) {
+            setIsSavingSubstitution(true);
+            
             const gameUpdateData = {
                 ...gameState,
                 team_a_active_players: activePlayers[selectedGame.team_a_id] || [],
                 team_b_active_players: activePlayers[selectedGame.team_b_id] || []
             };
             
-            router.post(route('scoresheet.update-state', selectedGame.id), gameUpdateData, {
-                preserveState: true,
-                preserveScroll: true,
-                onSuccess: () => {
-                    console.log('Active players saved successfully');
+            // Use fetch instead of router.post to avoid page reload (non-blocking with cleanup)
+            fetch(route('scoresheet.update-state', selectedGame.id), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json',
                 },
-                onError: (errors) => {
-                    console.error('Error saving active players:', errors);
+                body: JSON.stringify(gameUpdateData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Active players saved successfully (no reload)');
+                } else {
+                    console.error('Error saving active players:', response.statusText);
                 }
+            })
+            .catch(error => {
+                console.error('Error saving active players:', error);
+            })
+            .finally(() => {
+                setIsSavingSubstitution(false);
             });
         }
     };
@@ -827,6 +856,21 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 // Revert regular stat
                 const { statType, value } = lastAction;
                 updatedStats[statType] = Math.max(0, (updatedStats[statType] || 0) - value);
+                
+                // If undoing a foul, also subtract from team foul total
+                if (statType === 'fouls' && value > 0) {
+                    const player = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])]
+                        .find(p => (p.user?.id || p.id) === playerId);
+                    
+                    if (player) {
+                        const isTeamA = selectedGame.team_a?.players?.some(p => (p.user?.id || p.id) === playerId);
+                        setGameState(prev => ({
+                            ...prev,
+                            team_a_fouls: isTeamA ? Math.max(0, prev.team_a_fouls - value) : prev.team_a_fouls,
+                            team_b_fouls: !isTeamA ? Math.max(0, prev.team_b_fouls - value) : prev.team_b_fouls
+                        }));
+                    }
+                }
             }
             
             return { ...prev, [playerId]: updatedStats };
