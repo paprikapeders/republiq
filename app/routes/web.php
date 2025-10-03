@@ -58,6 +58,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/teams/player/{player}', [TeamManagementController::class, 'removePlayer'])->name('teams.remove-player');
     Route::get('/teams/code/{code}', [TeamManagementController::class, 'getTeamByCode'])->name('teams.by-code');
     
+    // Admin-only Team Management Routes
+    Route::middleware('admin')->group(function () {
+        Route::post('/admin/teams/add-player', [TeamManagementController::class, 'addPlayerToTeam'])->name('admin.teams.add-player');
+        Route::delete('/admin/teams/remove-player/{player}', [TeamManagementController::class, 'adminRemovePlayer'])->name('admin.teams.remove-player');
+    });
+    
     // Live Scoresheet Routes
     Route::get('/scoresheet', [LiveScoresheetController::class, 'index'])->name('scoresheet.index');
     Route::post('/scoresheet/create-matchup', [LiveScoresheetController::class, 'createMatchup'])->name('scoresheet.create-matchup');

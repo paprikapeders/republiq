@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Team;
 use App\Models\Player;
 use App\Models\User;
+use App\Models\League;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,10 +26,18 @@ class TeamManagementController extends Controller
         $teams = collect();
         $teamMembers = collect();
         
-        if ($user->role === 'coach') {
+        if ($user->role === 'admin') {
+            // Get all teams for admin
+            $teams = Team::with(['players.user', 'coach', 'league'])
+                ->get();
+                
+            // Get all team members for admin
+            $teamMembers = Player::with(['user', 'team'])
+                ->get();
+        } elseif ($user->role === 'coach') {
             // Get teams coached by this user
             $teams = Team::where('coach_id', $user->id)
-                ->with(['players.user'])
+                ->with(['players.user', 'league'])
                 ->get();
                 
             // Get all players from teams coached by this user
@@ -37,15 +47,28 @@ class TeamManagementController extends Controller
         } elseif ($user->role === 'player') {
             // Get teams where this user is a player
             $playerTeams = Player::where('user_id', $user->id)
-                ->with(['team.coach', 'team.players.user'])
+                ->with(['team.coach', 'team.league', 'team.players.user'])
                 ->get();
             $teams = $playerTeams->pluck('team');
+        }
+        
+        // Get additional data for admin/coach
+        $leagues = [];
+        $allUsers = [];
+        
+        if ($user->role === 'admin' || $user->role === 'coach') {
+            $leagues = League::all();
+            if ($user->role === 'admin') {
+                $allUsers = User::all();
+            }
         }
         
         return Inertia::render('TeamManagement', [
             'teams' => $teams,
             'teamMembers' => $teamMembers,
             'userRole' => $user->role,
+            'leagues' => $leagues,
+            'allUsers' => $allUsers,
         ]);
     }
 
@@ -56,24 +79,41 @@ class TeamManagementController extends Controller
     {
         $user = Auth::user();
         
-        if ($user->role !== 'coach') {
-            return redirect()->back()->withErrors(['error' => 'Only coaches can create teams.']);
+        if (!in_array($user->role, ['coach', 'admin'])) {
+            return redirect()->back()->withErrors(['error' => 'Only coaches and admins can create teams.']);
         }
         
-        $request->validate([
+        $validationRules = [
             'name' => 'required|string|max:255|unique:teams,name',
-        ]);
+        ];
+        
+        // Additional validation for admin
+        if ($user->role === 'admin') {
+            $validationRules['league_id'] = 'nullable|exists:leagues,id';
+            $validationRules['coach_id'] = 'nullable|exists:users,id';
+        }
+        
+        $request->validate($validationRules);
         
         // Generate unique team code
         do {
             $code = strtoupper(Str::random(6));
         } while (Team::where('code', $code)->exists());
         
-        $team = Team::create([
+        $teamData = [
             'name' => $request->name,
             'code' => $code,
-            'coach_id' => $user->id,
-        ]);
+        ];
+        
+        // Set coach_id based on role
+        if ($user->role === 'admin') {
+            $teamData['coach_id'] = $request->filled('coach_id') ? $request->coach_id : null;
+            $teamData['league_id'] = $request->filled('league_id') ? $request->league_id : null;
+        } else {
+            $teamData['coach_id'] = $user->id;
+        }
+        
+        $team = Team::create($teamData);
         
         return redirect()->back()->with('success', 'Team created successfully! Team code: ' . $code);
     }
@@ -191,5 +231,101 @@ class TeamManagementController extends Controller
         $player->delete();
         
         return redirect()->back()->with('success', $playerName . ' removed from team.');
+    }
+
+    /**
+     * Add a player to a team (admin only).
+     */
+    public function addPlayerToTeam(Request $request)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'admin') {
+            return redirect()->back()->withErrors(['error' => 'Unauthorized action.']);
+        }
+        
+        // Validate input - support both existing user_id and new player creation
+        $rules = [
+            'team_id' => 'required|exists:teams,id',
+            'jersey_number' => 'nullable|integer|min:0|max:99',
+            'position' => 'nullable|string|max:255',
+        ];
+        
+        // If user_id is provided, validate it exists
+        if ($request->filled('user_id')) {
+            $rules['user_id'] = 'required|exists:users,id';
+        } else {
+            // If creating new player, validate required fields
+            $rules['name'] = 'required|string|max:255';
+            $rules['email'] = 'required|email|unique:users,email';
+            $rules['phone'] = 'nullable|string|max:20';
+        }
+        
+        $request->validate($rules);
+        
+        // Determine user_id
+        $userId = null;
+        
+        if ($request->filled('user_id')) {
+            // Using existing user
+            $userId = $request->user_id;
+            $targetUser = User::find($userId);
+            
+            if ($targetUser->role !== 'player') {
+                return redirect()->back()->withErrors(['error' => 'Only players can be added to teams.']);
+            }
+        } else {
+            // Create new player user
+            $newUser = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'role' => 'player',
+                'password' => Hash::make('defaultpassword123'), // Default password
+                'email_verified_at' => now(), // Auto-verify admin-created users
+            ]);
+            $userId = $newUser->id;
+        }
+        
+        // Check if user is already a member of this team
+        $existingPlayer = Player::where('team_id', $request->team_id)
+            ->where('user_id', $userId)
+            ->first();
+            
+        if ($existingPlayer) {
+            return redirect()->back()->withErrors(['error' => 'User is already a member of this team.']);
+        }
+        
+        Player::create([
+            'team_id' => $request->team_id,
+            'user_id' => $userId,
+            'jersey_number' => $request->jersey_number,
+            'position' => $request->position,
+            'status' => 'approved', // Admin can directly approve
+        ]);
+        
+        $successMessage = $request->filled('user_id') 
+            ? 'Player added to team successfully!' 
+            : 'New player created and added to team successfully! Default password: defaultpassword123';
+        
+        return redirect()->back()->with('success', $successMessage);
+    }
+
+    /**
+     * Remove a player from team (admin only).
+     */
+    public function adminRemovePlayer(Player $player)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'admin') {
+            return redirect()->back()->withErrors(['error' => 'Unauthorized action.']);
+        }
+        
+        $playerName = $player->user->name;
+        $teamName = $player->team->name;
+        $player->delete();
+        
+        return redirect()->back()->with('success', $playerName . ' removed from ' . $teamName . '.');
     }
 }
