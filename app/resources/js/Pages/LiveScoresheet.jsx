@@ -151,27 +151,17 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 team_b_active_players: activePlayers[selectedGame.team_b_id] || []
             };
             
-            // Use fetch to avoid page reload (non-blocking)
-            fetch(route('scoresheet.update-state', selectedGame.id), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                    'Accept': 'application/json',
+            // Use Inertia router instead of fetch to avoid CSRF issues
+            router.post(route('scoresheet.update-state', selectedGame.id), gameUpdateData, {
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Success - no action needed, local state is already updated
                 },
-                body: JSON.stringify(gameUpdateData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    console.error('Error updating game state:', response.statusText);
+                onError: (errors) => {
+                    console.error('Error updating game state:', errors);
                     // Don't revert state on error to prevent timer reset
-                    // The local state should remain as the user intended
                 }
-            })
-            .catch(error => {
-                console.error('Error updating game state:', error);
-                // Don't revert state on error to prevent timer reset
-                // The local state should remain as the user intended
             });
         }
     };
@@ -570,32 +560,23 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 }
             }
             
-            // Save player stats in bulk if there are any
+            // Save player stats using Inertia instead of fetch to avoid CSRF issues
             if (playerStatsToSave.length > 0) {
-                const saveUrl = route('scoresheet.save-player-stats', selectedGame.id);
-                
-                await fetch(saveUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
+                await new Promise((resolve, reject) => {
+                    router.post(route('scoresheet.save-player-stats', selectedGame.id), {
                         player_stats: playerStatsToSave
-                    })
-                }).then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
-                        });
-                    }
-                    return response.json();
-                }).then(data => {
-                    console.log('Player stats saved successfully');
-                }).catch(error => {
-                    console.error('Error saving player stats:', error);
-                    throw error;
+                    }, {
+                        preserveState: true,
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            console.log('Player stats saved successfully');
+                            resolve();
+                        },
+                        onError: (errors) => {
+                            console.error('Error saving player stats:', errors);
+                            reject(errors);
+                        }
+                    });
                 });
             }
             
@@ -772,20 +753,19 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 team_b_active_players: activePlayers[selectedGame.team_b_id] || []
             };
             
-            // Save game state first
-            await fetch(route('scoresheet.update-state', selectedGame.id), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(gameUpdateData)
-            }).then(response => {
-                if (!response.ok) {
-                    throw new Error(`Failed to save game state: ${response.statusText}`);
-                }
-                return response.json();
+            // Save game state first using Inertia
+            await new Promise((resolve, reject) => {
+                router.post(route('scoresheet.update-state', selectedGame.id), gameUpdateData, {
+                    preserveState: true,
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        resolve();
+                    },
+                    onError: (errors) => {
+                        console.error('Error saving game state:', errors);
+                        reject(errors);
+                    }
+                });
             });
             
             // If there are unsaved player stats, save them too (without page reload)
@@ -821,21 +801,20 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 }
                 
                 if (playerStatsToSave.length > 0) {
-                    await fetch(route('scoresheet.save-player-stats', selectedGame.id), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                            'Accept': 'application/json',
-                        },
-                        body: JSON.stringify({
+                    await new Promise((resolve, reject) => {
+                        router.post(route('scoresheet.save-player-stats', selectedGame.id), {
                             player_stats: playerStatsToSave
-                        })
-                    }).then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Failed to save player stats: ${response.statusText}`);
-                        }
-                        return response.json();
+                        }, {
+                            preserveState: true,
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                resolve();
+                            },
+                            onError: (errors) => {
+                                console.error('Error saving player stats:', errors);
+                                reject(errors);
+                            }
+                        });
                     });
                     
                     // Clear unsaved changes flag since we saved everything
