@@ -72,9 +72,27 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             const statsMap = {};
             selectedGame.player_stats.forEach(stat => {
                 // Use user_id for consistency with frontend player identification
-                const userId = stat.player?.user_id || stat.player_id;
+                // The stat.player.user.id is the user_id we need for frontend consistency
+                const userId = stat.player?.user?.id || stat.player?.user_id;
                 if (userId) {
-                    statsMap[userId] = { ...stat };
+                    // Map the stat data properly
+                    statsMap[userId] = {
+                        player_id: userId, // Use user_id for frontend consistency
+                        points: stat.points || 0,
+                        field_goals_made: stat.field_goals_made || 0,
+                        field_goals_attempted: stat.field_goals_attempted || 0,
+                        three_pointers_made: stat.three_pointers_made || 0,
+                        three_pointers_attempted: stat.three_pointers_attempted || 0,
+                        free_throws_made: stat.free_throws_made || 0,
+                        free_throws_attempted: stat.free_throws_attempted || 0,
+                        assists: stat.assists || 0,
+                        rebounds: stat.rebounds || 0,
+                        fouls: stat.fouls || 0,
+                        steals: stat.steals || 0,
+                        blocks: stat.blocks || 0,
+                        turnovers: stat.turnovers || 0,
+                        minutes_played: stat.minutes_played || 0
+                    };
                 }
             });
             setLocalPlayerStats(statsMap);
@@ -533,13 +551,14 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             
             for (const [playerId, stats] of Object.entries(localPlayerStats)) {
                 // Find the actual player to get the correct player_id for the database
+                // playerId here is the user_id, so we need to find the player by user_id
                 const allPlayers = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])];
-                const player = allPlayers.find(p => (p.user?.id || p.id) == playerId);
+                const player = allPlayers.find(p => (p.user?.id || p.user_id) == playerId);
                 
                 if (player) {
-                    // Only save stats that have values > 0
+                    // Use the player's user_id for the database lookup (this matches the backend logic)
                     const filteredStats = {
-                        player_id: player.id, // Use the actual player.id for database
+                        player_id: playerId, // Use the user_id since backend expects this
                         points: stats.points || 0,
                         assists: stats.assists || 0,
                         rebounds: stats.rebounds || 0,
@@ -606,9 +625,26 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             const statsMap = {};
             selectedGame.player_stats.forEach(stat => {
                 // Use user_id for consistency with frontend player identification
-                const userId = stat.player?.user_id || stat.player_id;
+                const userId = stat.player?.user?.id || stat.player?.user_id;
                 if (userId) {
-                    statsMap[userId] = { ...stat };
+                    // Map the stat data properly
+                    statsMap[userId] = {
+                        player_id: userId, // Use user_id for frontend consistency
+                        points: stat.points || 0,
+                        field_goals_made: stat.field_goals_made || 0,
+                        field_goals_attempted: stat.field_goals_attempted || 0,
+                        three_pointers_made: stat.three_pointers_made || 0,
+                        three_pointers_attempted: stat.three_pointers_attempted || 0,
+                        free_throws_made: stat.free_throws_made || 0,
+                        free_throws_attempted: stat.free_throws_attempted || 0,
+                        assists: stat.assists || 0,
+                        rebounds: stat.rebounds || 0,
+                        fouls: stat.fouls || 0,
+                        steals: stat.steals || 0,
+                        blocks: stat.blocks || 0,
+                        turnovers: stat.turnovers || 0,
+                        minutes_played: stat.minutes_played || 0
+                    };
                 }
             });
             setLocalPlayerStats(statsMap);
@@ -774,12 +810,13 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 
                 for (const [playerId, stats] of Object.entries(localPlayerStats)) {
                     // Find the actual player to get the correct player_id for the database
+                    // playerId here is the user_id, so we need to find the player by user_id
                     const allPlayers = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])];
-                    const player = allPlayers.find(p => (p.user?.id || p.id) == playerId);
+                    const player = allPlayers.find(p => (p.user?.id || p.user_id) == playerId);
                     
                     if (player) {
                         const filteredStats = {
-                            player_id: player.id, // Use the actual player.id for database
+                            player_id: playerId, // Use the user_id since backend expects this
                             points: stats.points || 0,
                             assists: stats.assists || 0,
                             rebounds: stats.rebounds || 0,
