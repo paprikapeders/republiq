@@ -71,6 +71,8 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         console.log('=== STATS INITIALIZATION DEBUG ===');
         console.log('selectedGame:', selectedGame);
         console.log('selectedGame.player_stats:', selectedGame?.player_stats);
+        console.log('Team A players structure:', selectedGame?.team_a?.players);
+        console.log('Team B players structure:', selectedGame?.team_b?.players);
         
         if (selectedGame?.player_stats && selectedGame.player_stats.length > 0) {
             console.log('Processing player stats, count:', selectedGame.player_stats.length);
@@ -79,6 +81,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             
             selectedGame.player_stats.forEach((stat, index) => {
                 console.log(`Processing stat ${index + 1}:`, stat);
+                console.log('Full stat object structure:', JSON.stringify(stat, null, 2));
                 
                 // Try multiple ways to get the user ID for maximum compatibility
                 let userId = null;
@@ -98,6 +101,21 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                     userId = stat.user_id;
                     console.log(`Found userId via stat.user_id: ${userId}`);
                 }
+                // Method 4: Based on the logs, try to extract from the structure
+                else if (stat.player_id && selectedGame.team_a?.players) {
+                    // Find the player by player_id and get their user_id
+                    const allPlayers = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])];
+                    const player = allPlayers.find(p => p.id === stat.player_id);
+                    if (player?.user_id) {
+                        userId = player.user_id;
+                        console.log(`Found userId via player lookup: ${userId} (player_id: ${stat.player_id})`);
+                    } else if (player?.user?.id) {
+                        userId = player.user.id;
+                        console.log(`Found userId via player.user.id lookup: ${userId} (player_id: ${stat.player_id})`);
+                    }
+                }
+                
+                console.log(`Final userId determined: ${userId}`);
                 
                 if (userId) {
                     // Create a clean stats object
@@ -1714,7 +1732,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                     {/* Debug Panel - Remove this after debugging */}
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs">
                         <h4 className="font-bold text-yellow-800 mb-2">Debug Info (Remove this after fixing)</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <strong>Raw Player Stats Count:</strong> {selectedGame?.player_stats?.length || 0}
                                 <br />
@@ -1723,11 +1741,21 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                 <strong>Local Stats Keys:</strong> [{Object.keys(localPlayerStats).join(', ')}]
                             </div>
                             <div>
-                                <strong>Sample Player Stats:</strong>
+                                <strong>Team A User IDs:</strong> [
+                                {selectedGame?.team_a?.players?.map(p => p.user?.id || p.user_id).filter(Boolean).join(', ')}]
+                                <br />
+                                <strong>Team B User IDs:</strong> [
+                                {selectedGame?.team_b?.players?.map(p => p.user?.id || p.user_id).filter(Boolean).join(', ')}]
+                            </div>
+                            <div>
+                                <strong>Raw Player Stats Sample:</strong>
                                 <pre className="text-xs bg-yellow-100 p-1 rounded mt-1 overflow-auto max-h-20">
-                                    {JSON.stringify(Object.fromEntries(Object.entries(localPlayerStats).slice(0, 2)), null, 2)}
+                                    {JSON.stringify(selectedGame?.player_stats?.slice(0, 2), null, 2)}
                                 </pre>
                             </div>
+                        </div>
+                        <div className="mt-2">
+                            <strong>Expected User IDs from logs:</strong> [13, 14, 15, 16, 39, 41, 43, 46, 47]
                         </div>
                     </div>
                     
