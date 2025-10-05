@@ -70,6 +70,14 @@ class LiveScoresheetController extends Controller
             'playerStats.player.user'
         ]);
         
+        // Debug logging for player stats
+        \Log::info('LiveScoresheet Debug - Game ID: ' . $game->id);
+        \Log::info('Player Stats Count: ' . $game->playerStats->count());
+        foreach ($game->playerStats as $stat) {
+            $userId = $stat->player ? $stat->player->user_id : 'null';
+            \Log::info('Stat ID: ' . $stat->id . ' Player ID: ' . $stat->player_id . ' User ID: ' . $userId . ' Points: ' . $stat->points);
+        }
+        
         // Get current game state
         $gameState = [
             'quarter' => $game->current_quarter ?: 1,

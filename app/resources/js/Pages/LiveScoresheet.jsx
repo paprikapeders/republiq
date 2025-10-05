@@ -68,34 +68,69 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
 
     // Initialize local stats and active players from server data
     useEffect(() => {
-        if (selectedGame?.player_stats) {
+        console.log('=== STATS INITIALIZATION DEBUG ===');
+        console.log('selectedGame:', selectedGame);
+        console.log('selectedGame.player_stats:', selectedGame?.player_stats);
+        
+        if (selectedGame?.player_stats && selectedGame.player_stats.length > 0) {
+            console.log('Processing player stats, count:', selectedGame.player_stats.length);
+            
             const statsMap = {};
-            selectedGame.player_stats.forEach(stat => {
-                // Use user_id for consistency with frontend player identification
-                // The stat.player.user.id is the user_id we need for frontend consistency
-                const userId = stat.player?.user?.id || stat.player?.user_id;
+            
+            selectedGame.player_stats.forEach((stat, index) => {
+                console.log(`Processing stat ${index + 1}:`, stat);
+                
+                // Try multiple ways to get the user ID for maximum compatibility
+                let userId = null;
+                
+                // Method 1: stat.player.user.id (from relationship)
+                if (stat.player?.user?.id) {
+                    userId = stat.player.user.id;
+                    console.log(`Found userId via stat.player.user.id: ${userId}`);
+                }
+                // Method 2: stat.player.user_id (direct field)
+                else if (stat.player?.user_id) {
+                    userId = stat.player.user_id;
+                    console.log(`Found userId via stat.player.user_id: ${userId}`);
+                }
+                // Method 3: stat.user_id (fallback)
+                else if (stat.user_id) {
+                    userId = stat.user_id;
+                    console.log(`Found userId via stat.user_id: ${userId}`);
+                }
+                
                 if (userId) {
-                    // Map the stat data properly
-                    statsMap[userId] = {
-                        player_id: userId, // Use user_id for frontend consistency
-                        points: stat.points || 0,
-                        field_goals_made: stat.field_goals_made || 0,
-                        field_goals_attempted: stat.field_goals_attempted || 0,
-                        three_pointers_made: stat.three_pointers_made || 0,
-                        three_pointers_attempted: stat.three_pointers_attempted || 0,
-                        free_throws_made: stat.free_throws_made || 0,
-                        free_throws_attempted: stat.free_throws_attempted || 0,
-                        assists: stat.assists || 0,
-                        rebounds: stat.rebounds || 0,
-                        fouls: stat.fouls || 0,
-                        steals: stat.steals || 0,
-                        blocks: stat.blocks || 0,
-                        turnovers: stat.turnovers || 0,
-                        minutes_played: stat.minutes_played || 0
+                    // Create a clean stats object
+                    const cleanStats = {
+                        player_id: userId,
+                        points: parseInt(stat.points) || 0,
+                        field_goals_made: parseInt(stat.field_goals_made) || 0,
+                        field_goals_attempted: parseInt(stat.field_goals_attempted) || 0,
+                        three_pointers_made: parseInt(stat.three_pointers_made) || 0,
+                        three_pointers_attempted: parseInt(stat.three_pointers_attempted) || 0,
+                        free_throws_made: parseInt(stat.free_throws_made) || 0,
+                        free_throws_attempted: parseInt(stat.free_throws_attempted) || 0,
+                        assists: parseInt(stat.assists) || 0,
+                        rebounds: parseInt(stat.rebounds) || 0,
+                        fouls: parseInt(stat.fouls) || 0,
+                        steals: parseInt(stat.steals) || 0,
+                        blocks: parseInt(stat.blocks) || 0,
+                        turnovers: parseInt(stat.turnovers) || 0,
+                        minutes_played: parseInt(stat.minutes_played) || 0
                     };
+                    
+                    statsMap[userId] = cleanStats;
+                    console.log(`Mapped stats for userId ${userId}:`, cleanStats);
+                } else {
+                    console.warn('Could not find userId for stat:', stat);
                 }
             });
+            
+            console.log('Final statsMap:', statsMap);
             setLocalPlayerStats(statsMap);
+        } else {
+            console.log('No player stats found or empty array');
+            setLocalPlayerStats({});
         }
         
         // Initialize active players from server data or set initial starters
@@ -620,33 +655,39 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
 
     const undoLastAction = () => {
+        console.log('=== UNDO LAST ACTION DEBUG ===');
+        console.log('Refreshing from server data...');
+        
         // Simple undo by refreshing from server data
-        if (selectedGame?.player_stats) {
+        if (selectedGame?.player_stats && selectedGame.player_stats.length > 0) {
             const statsMap = {};
+            
             selectedGame.player_stats.forEach(stat => {
-                // Use user_id for consistency with frontend player identification
-                const userId = stat.player?.user?.id || stat.player?.user_id;
+                // Use the same logic as initialization
+                let userId = stat.player?.user?.id || stat.player?.user_id || stat.user_id;
+                
                 if (userId) {
-                    // Map the stat data properly
                     statsMap[userId] = {
-                        player_id: userId, // Use user_id for frontend consistency
-                        points: stat.points || 0,
-                        field_goals_made: stat.field_goals_made || 0,
-                        field_goals_attempted: stat.field_goals_attempted || 0,
-                        three_pointers_made: stat.three_pointers_made || 0,
-                        three_pointers_attempted: stat.three_pointers_attempted || 0,
-                        free_throws_made: stat.free_throws_made || 0,
-                        free_throws_attempted: stat.free_throws_attempted || 0,
-                        assists: stat.assists || 0,
-                        rebounds: stat.rebounds || 0,
-                        fouls: stat.fouls || 0,
-                        steals: stat.steals || 0,
-                        blocks: stat.blocks || 0,
-                        turnovers: stat.turnovers || 0,
-                        minutes_played: stat.minutes_played || 0
+                        player_id: userId,
+                        points: parseInt(stat.points) || 0,
+                        field_goals_made: parseInt(stat.field_goals_made) || 0,
+                        field_goals_attempted: parseInt(stat.field_goals_attempted) || 0,
+                        three_pointers_made: parseInt(stat.three_pointers_made) || 0,
+                        three_pointers_attempted: parseInt(stat.three_pointers_attempted) || 0,
+                        free_throws_made: parseInt(stat.free_throws_made) || 0,
+                        free_throws_attempted: parseInt(stat.free_throws_attempted) || 0,
+                        assists: parseInt(stat.assists) || 0,
+                        rebounds: parseInt(stat.rebounds) || 0,
+                        fouls: parseInt(stat.fouls) || 0,
+                        steals: parseInt(stat.steals) || 0,
+                        blocks: parseInt(stat.blocks) || 0,
+                        turnovers: parseInt(stat.turnovers) || 0,
+                        minutes_played: parseInt(stat.minutes_played) || 0
                     };
                 }
             });
+            
+            console.log('Restored statsMap:', statsMap);
             setLocalPlayerStats(statsMap);
             setGameState(prev => ({
                 ...prev,
@@ -654,6 +695,8 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 team_b_score: selectedGame.team_b_score || 0
             }));
             setHasUnsavedChanges(false);
+        } else {
+            console.log('No stats to restore');
         }
     };
 
@@ -1138,6 +1181,15 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     const PlayerRow = ({ player, teamColor, isActive = true }) => {
         const playerId = player.user?.id || player.id;
         const stats = localPlayerStats[playerId] || {};
+        
+        // Debug logging for player stats
+        if (player.user?.name === 'Test Player' || Object.keys(localPlayerStats).length > 0) {
+            console.log(`PlayerRow Debug - ${player.user?.name || player.name}:`);
+            console.log('  playerId:', playerId);
+            console.log('  player object:', player);
+            console.log('  stats found:', stats);
+            console.log('  localPlayerStats keys:', Object.keys(localPlayerStats));
+        }
         
         if (!isActive) return null;
         
@@ -1658,6 +1710,26 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
 
             <div className="py-3">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-2">
+                    
+                    {/* Debug Panel - Remove this after debugging */}
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs">
+                        <h4 className="font-bold text-yellow-800 mb-2">Debug Info (Remove this after fixing)</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <strong>Raw Player Stats Count:</strong> {selectedGame?.player_stats?.length || 0}
+                                <br />
+                                <strong>Loaded Local Stats Keys:</strong> {Object.keys(localPlayerStats).length}
+                                <br />
+                                <strong>Local Stats Keys:</strong> [{Object.keys(localPlayerStats).join(', ')}]
+                            </div>
+                            <div>
+                                <strong>Sample Player Stats:</strong>
+                                <pre className="text-xs bg-yellow-100 p-1 rounded mt-1 overflow-auto max-h-20">
+                                    {JSON.stringify(Object.fromEntries(Object.entries(localPlayerStats).slice(0, 2)), null, 2)}
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
                     
                     {/* Game Header - Compact */}
                     <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-3">
