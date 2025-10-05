@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TeamManagementController;
 use App\Http\Controllers\LiveScoresheetController;
 use App\Http\Controllers\SeasonManagementController;
+use App\Http\Controllers\TeamLeagueController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -73,6 +74,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/scoresheet/{game}/update-state', [LiveScoresheetController::class, 'updateGameState'])->name('scoresheet.update-state');
     Route::post('/scoresheet/{game}/field-goal', [LiveScoresheetController::class, 'recordFieldGoal'])->name('scoresheet.record-field-goal');
     Route::post('/scoresheet/{game}/stat', [LiveScoresheetController::class, 'recordPlayerStat'])->name('scoresheet.record-stat');
+    Route::post('/scoresheet/{game}/save-player-stats', [LiveScoresheetController::class, 'savePlayerStats'])->name('scoresheet.save-player-stats');
+    
+    // Team-League Management Routes (Admin Only)
+    Route::get('/team-leagues', [TeamLeagueController::class, 'index'])->name('team-leagues.index');
+    Route::post('/team-leagues/add', [TeamLeagueController::class, 'addTeamToLeague'])->name('team-leagues.add');
+    Route::post('/team-leagues/remove', [TeamLeagueController::class, 'removeTeamFromLeague'])->name('team-leagues.remove');
     
     // Season Management Routes (Admin Only)
     Route::get('/season-management', [SeasonManagementController::class, 'index'])->name('season-management.index');

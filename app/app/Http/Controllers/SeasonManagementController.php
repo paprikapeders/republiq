@@ -25,7 +25,8 @@ class SeasonManagementController extends Controller
             ->orderBy('year', 'desc')
             ->get();
             
-        $availableTeams = Team::whereNull('league_id')->get();
+        // Get teams that are not in any league yet
+        $availableTeams = Team::whereDoesntHave('leagues')->get();
         $allTeams = Team::all();
         $activeSeason = League::where('is_active', true)->first();
         $activeSeasonId = $activeSeason ? $activeSeason->id : null;
@@ -124,8 +125,11 @@ class SeasonManagementController extends Controller
             'team_id' => 'required|exists:teams,id',
         ]);
         
-        // Update team to belong to this league
-        Team::where('id', $validated['team_id'])->update(['league_id' => $season->id]);
+        // Add team to this league using many-to-many relationship
+        $team = Team::find($validated['team_id']);
+        if (!$team->leagues()->where('league_id', $season->id)->exists()) {
+            $team->leagues()->attach($season->id);
+        }
         
         return redirect()->back()->with('success', 'Team added to season successfully!');
     }
@@ -142,8 +146,9 @@ class SeasonManagementController extends Controller
             'team_id' => 'required|exists:teams,id',
         ]);
         
-        // Remove team from this league
-        Team::where('id', $validated['team_id'])->update(['league_id' => null]);
+        // Remove team from this league using many-to-many relationship
+        $team = Team::find($validated['team_id']);
+        $team->leagues()->detach($season->id);
         
         return redirect()->back()->with('success', 'Team removed from season successfully!');
     }

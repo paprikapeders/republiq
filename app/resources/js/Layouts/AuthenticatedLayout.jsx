@@ -54,6 +54,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                         Season Management
                                     </NavLink>
                                 )}
+                                {user.role === 'admin' && (
+                                    <NavLink
+                                        href={route('team-leagues.index')}
+                                        active={route().current('team-leagues.*')}
+                                    >
+                                        Team-League Management
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 
@@ -180,6 +188,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                 active={route().current('season-management.*')}
                             >
                                 Season Management
+                            </ResponsiveNavLink>
+                        )}
+                        {user.role === 'admin' && (
+                            <ResponsiveNavLink
+                                href={route('team-leagues.index')}
+                                active={route().current('team-leagues.*')}
+                            >
+                                Team-League Management
                             </ResponsiveNavLink>
                         )}
                     </div>

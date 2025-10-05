@@ -16,8 +16,8 @@ class LiveScoresheetController extends Controller
     {
         $user = Auth::user();
         
-        // Only coaches, referees, and admins can access live scoresheet
-        if (!in_array($user->role, ['coach', 'referee', 'admin'])) {
+        // Only coaches, referees, committee, and admins can access live scoresheet
+        if (!in_array($user->role, ['coach', 'referee', 'committee', 'admin'])) {
             return redirect()->route('dashboard')->withErrors(['error' => 'Unauthorized access.']);
         }
         
@@ -29,14 +29,20 @@ class LiveScoresheetController extends Controller
             ->get();
             
         // Get all leagues with their teams
-        $leagues = \App\Models\League::with('teams')
-            ->where('status', 'active')
-            ->orWhere('is_active', true)
-            ->orderBy('year', 'desc')
-            ->get();
+        // Admin and committee can see all leagues, others only see active ones
+        $leaguesQuery = \App\Models\League::with('teams');
+        
+        if (!in_array($user->role, ['admin', 'committee'])) {
+            $leaguesQuery->where(function($query) {
+                $query->where('status', 'active')
+                      ->orWhere('is_active', true);
+            });
+        }
+        
+        $leagues = $leaguesQuery->orderBy('year', 'desc')->get();
             
         // Get all teams for matchup creation
-        $allTeams = \App\Models\Team::with('league')
+        $allTeams = \App\Models\Team::with('leagues')
             ->orderBy('name')
             ->get();
             
@@ -53,7 +59,7 @@ class LiveScoresheetController extends Controller
         $user = Auth::user();
         
         // Authorization check
-        if (!in_array($user->role, ['coach', 'referee', 'admin'])) {
+        if (!in_array($user->role, ['coach', 'referee', 'committee', 'admin'])) {
             return redirect()->route('dashboard')->withErrors(['error' => 'Unauthorized access.']);
         }
         
@@ -83,14 +89,20 @@ class LiveScoresheetController extends Controller
         ];
         
         // Get all leagues with their teams for edit matchup functionality
-        $leagues = \App\Models\League::with('teams')
-            ->where('status', 'active')
-            ->orWhere('is_active', true)
-            ->orderBy('year', 'desc')
-            ->get();
+        // Admin and committee can see all leagues, others only see active ones
+        $leaguesQuery = \App\Models\League::with('teams');
+        
+        if (!in_array($user->role, ['admin', 'committee'])) {
+            $leaguesQuery->where(function($query) {
+                $query->where('status', 'active')
+                      ->orWhere('is_active', true);
+            });
+        }
+        
+        $leagues = $leaguesQuery->orderBy('year', 'desc')->get();
             
         // Get all teams for matchup editing
-        $allTeams = \App\Models\Team::with('league')
+        $allTeams = \App\Models\Team::with('leagues')
             ->orderBy('name')
             ->get();
 
@@ -107,7 +119,7 @@ class LiveScoresheetController extends Controller
     {
         $user = Auth::user();
         
-        if (!in_array($user->role, ['referee', 'admin'])) {
+        if (!in_array($user->role, ['referee', 'committee', 'admin'])) {
             return redirect()->back()->withErrors(['error' => 'Unauthorized access.']);
         }
         
@@ -156,7 +168,7 @@ class LiveScoresheetController extends Controller
     {
         $user = Auth::user();
         
-        if (!in_array($user->role, ['coach', 'referee', 'admin'])) {
+        if (!in_array($user->role, ['coach', 'referee', 'committee', 'admin'])) {
             return redirect()->back()->withErrors(['error' => 'Unauthorized access.']);
         }
         
@@ -207,7 +219,7 @@ class LiveScoresheetController extends Controller
     {
         $user = Auth::user();
         
-        if (!in_array($user->role, ['coach', 'referee', 'admin'])) {
+        if (!in_array($user->role, ['coach', 'referee', 'committee', 'admin'])) {
             return redirect()->back()->withErrors(['error' => 'Unauthorized access.']);
         }
         
@@ -293,7 +305,7 @@ class LiveScoresheetController extends Controller
     {
         $user = Auth::user();
         
-        if (!in_array($user->role, ['referee', 'admin'])) {
+        if (!in_array($user->role, ['referee', 'committee', 'admin'])) {
             return redirect()->back()->withErrors(['error' => 'Unauthorized access.']);
         }
         
@@ -306,10 +318,10 @@ class LiveScoresheetController extends Controller
         ]);
         
         // Verify teams belong to the selected league
-        $teamA = Team::find($validated['team_a_id']);
-        $teamB = Team::find($validated['team_b_id']);
+        $teamA = Team::with('leagues')->find($validated['team_a_id']);
+        $teamB = Team::with('leagues')->find($validated['team_b_id']);
         
-        if ($teamA->league_id != $validated['league_id'] || $teamB->league_id != $validated['league_id']) {
+        if (!$teamA->leagues->contains($validated['league_id']) || !$teamB->leagues->contains($validated['league_id'])) {
             return redirect()->back()->withErrors(['error' => 'Both teams must belong to the selected league.']);
         }
         
@@ -340,8 +352,8 @@ class LiveScoresheetController extends Controller
     {
         $user = Auth::user();
         
-        // Only admins and coaches can edit matchups
-        if (!in_array($user->role, ['admin', 'coach'])) {
+        // Only admins, coaches, and committee can edit matchups
+        if (!in_array($user->role, ['admin', 'coach', 'committee'])) {
             return redirect()->back()->withErrors(['error' => 'Unauthorized action.']);
         }
         
@@ -355,10 +367,10 @@ class LiveScoresheetController extends Controller
         
         // Validate teams belong to selected league if league is specified
         if ($validated['league_id']) {
-            $teamA = Team::find($validated['team_a_id']);
-            $teamB = Team::find($validated['team_b_id']);
+            $teamA = Team::with('leagues')->find($validated['team_a_id']);
+            $teamB = Team::with('leagues')->find($validated['team_b_id']);
             
-            if ($teamA->league_id !== (int)$validated['league_id'] || $teamB->league_id !== (int)$validated['league_id']) {
+            if (!$teamA->leagues->contains($validated['league_id']) || !$teamB->leagues->contains($validated['league_id'])) {
                 return redirect()->back()->withErrors(['error' => 'Both teams must belong to the selected league.']);
             }
         }
@@ -372,5 +384,78 @@ class LiveScoresheetController extends Controller
         ]);
         
         return redirect()->back()->with('success', 'Matchup updated successfully!');
+    }
+
+    public function savePlayerStats(Request $request, Game $game)
+    {
+        $user = Auth::user();
+        
+        if (!in_array($user->role, ['coach', 'referee', 'committee', 'admin'])) {
+            return response()->json(['error' => 'Unauthorized access.'], 403);
+        }
+        
+        try {
+            $playerStats = $request->input('player_stats', []);
+            \Log::info('Received player stats data:', ['count' => count($playerStats), 'data' => $playerStats]);
+            
+            foreach ($playerStats as $statData) {
+                $playerId = $statData['player_id'];
+                \Log::info('Processing player stats for user ID:', ['user_id' => $playerId]);
+                
+                // Find the actual player record using user_id
+                $player = \App\Models\Player::where('user_id', $playerId)->first();
+                \Log::info('Player lookup result:', ['user_id' => $playerId, 'player_found' => $player ? $player->id : 'not found']);
+                
+                if (!$player) {
+                    \Log::warning('Player not found for user_id:', ['user_id' => $playerId]);
+                    continue; // Skip if player not found
+                }
+                
+                // Prepare the stat data (remove player_id from data array)
+                $statsToSave = [
+                    'points' => (int)(isset($statData['points']) ? $statData['points'] : 0),
+                    'assists' => (int)(isset($statData['assists']) ? $statData['assists'] : 0),
+                    'rebounds' => (int)(isset($statData['rebounds']) ? $statData['rebounds'] : 0),
+                    'steals' => (int)(isset($statData['steals']) ? $statData['steals'] : 0),
+                    'blocks' => (int)(isset($statData['blocks']) ? $statData['blocks'] : 0),
+                    'fouls' => (int)(isset($statData['fouls']) ? $statData['fouls'] : 0),
+                    'field_goals_made' => (int)(isset($statData['field_goals_made']) ? $statData['field_goals_made'] : 0),
+                    'field_goals_attempted' => (int)(isset($statData['field_goals_attempted']) ? $statData['field_goals_attempted'] : 0),
+                    'three_pointers_made' => (int)(isset($statData['three_pointers_made']) ? $statData['three_pointers_made'] : 0),
+                    'three_pointers_attempted' => (int)(isset($statData['three_pointers_attempted']) ? $statData['three_pointers_attempted'] : 0),
+                    'free_throws_made' => (int)(isset($statData['free_throws_made']) ? $statData['free_throws_made'] : 0),
+                    'free_throws_attempted' => (int)(isset($statData['free_throws_attempted']) ? $statData['free_throws_attempted'] : 0),
+                    'turnovers' => (int)(isset($statData['turnovers']) ? $statData['turnovers'] : 0),
+                    'minutes_played' => (int)(isset($statData['minutes_played']) ? $statData['minutes_played'] : 0)
+                ];
+                
+                // Use updateOrCreate to either update existing stats or create new ones
+                \Log::info('Saving stats for player:', ['game_id' => $game->id, 'player_id' => $player->id, 'stats' => $statsToSave]);
+                
+                $playerStat = PlayerStat::updateOrCreate(
+                    [
+                        'game_id' => $game->id,
+                        'player_id' => $player->id  // Use the actual player ID, not user ID
+                    ],
+                    $statsToSave
+                );
+                
+                \Log::info('Player stat saved:', ['id' => $playerStat->id, 'was_recently_created' => $playerStat->wasRecentlyCreated]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Player stats saved successfully',
+                'stats_saved' => count($playerStats)
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error saving player stats: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving player stats: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

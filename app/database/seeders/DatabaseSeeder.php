@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             BasketballLeagueSeeder::class,
+            // NewTeamsAndPlayersSeeder is called from BasketballLeagueSeeder after DemoUsersSeeder
         ]);
     }
 }

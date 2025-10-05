@@ -29,7 +29,8 @@ class League extends Model
 
     public function teams()
     {
-        return $this->hasMany(Team::class);
+        return $this->belongsToMany(Team::class, 'league_team')
+                    ->withTimestamps();
     }
 
     public function games()

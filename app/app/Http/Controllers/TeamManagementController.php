@@ -28,7 +28,7 @@ class TeamManagementController extends Controller
         
         if ($user->role === 'admin') {
             // Get all teams for admin
-            $teams = Team::with(['players.user', 'coach', 'league'])
+            $teams = Team::with(['players.user', 'coach', 'leagues'])
                 ->get();
                 
             // Get all team members for admin
@@ -37,7 +37,7 @@ class TeamManagementController extends Controller
         } elseif ($user->role === 'coach') {
             // Get teams coached by this user
             $teams = Team::where('coach_id', $user->id)
-                ->with(['players.user', 'league'])
+                ->with(['players.user', 'leagues'])
                 ->get();
                 
             // Get all players from teams coached by this user
@@ -47,7 +47,7 @@ class TeamManagementController extends Controller
         } elseif ($user->role === 'player') {
             // Get teams where this user is a player
             $playerTeams = Player::where('user_id', $user->id)
-                ->with(['team.coach', 'team.league', 'team.players.user'])
+                ->with(['team.coach', 'team.leagues', 'team.players.user'])
                 ->get();
             $teams = $playerTeams->pluck('team');
         }
@@ -108,12 +108,16 @@ class TeamManagementController extends Controller
         // Set coach_id based on role
         if ($user->role === 'admin') {
             $teamData['coach_id'] = $request->filled('coach_id') ? $request->coach_id : null;
-            $teamData['league_id'] = $request->filled('league_id') ? $request->league_id : null;
         } else {
             $teamData['coach_id'] = $user->id;
         }
         
         $team = Team::create($teamData);
+        
+        // If admin specified a league, add the team to that league
+        if ($user->role === 'admin' && $request->filled('league_id')) {
+            $team->leagues()->attach($request->league_id);
+        }
         
         return redirect()->back()->with('success', 'Team created successfully! Team code: ' . $code);
     }

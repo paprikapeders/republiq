@@ -283,8 +283,8 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                                         <div className="text-sm text-gray-600 space-y-1">
                                                             <p>Members: {teamApprovedMembers.length}</p>
                                                             <p>Pending: {teamPendingMembers.length}</p>
-                                                            {team.league && (
-                                                                <p>League: {team.league.name}</p>
+                                                            {team.leagues && team.leagues.length > 0 && (
+                                                                <p>Leagues: {team.leagues.map(league => league.name).join(', ')}</p>
                                                             )}
                                                             {team.coach && userRole === 'admin' && (
                                                                 <p>Coach: {team.coach.name}</p>
@@ -296,8 +296,8 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                                 {userRole === 'player' && team.coach && (
                                                     <div className="text-sm text-gray-600">
                                                         <p>Coach: {team.coach.name}</p>
-                                                        {team.league && (
-                                                            <p>League: {team.league.name}</p>
+                                                        {team.leagues && team.leagues.length > 0 && (
+                                                            <p>Leagues: {team.leagues.map(league => league.name).join(', ')}</p>
                                                         )}
                                                     </div>
                                                 )}

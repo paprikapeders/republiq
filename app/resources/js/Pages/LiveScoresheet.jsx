@@ -71,7 +71,11 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         if (selectedGame?.player_stats) {
             const statsMap = {};
             selectedGame.player_stats.forEach(stat => {
-                statsMap[stat.player_id] = { ...stat };
+                // Use user_id for consistency with frontend player identification
+                const userId = stat.player?.user_id;
+                if (userId) {
+                    statsMap[userId] = { ...stat };
+                }
             });
             setLocalPlayerStats(statsMap);
         }
@@ -81,33 +85,22 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             setActivePlayers(prev => {
                 const newActivePlayers = { ...prev };
                 
-                console.log('Initializing active players:', {
-                    selectedGameId: selectedGame.id,
-                    teamAActiveFromServer: initialGameState?.team_a_active_players,
-                    teamBActiveFromServer: initialGameState?.team_b_active_players,
-                    currentActivePlayers: prev
-                });
-                
                 // Always use server data if available (to handle page reloads properly)
                 if (initialGameState?.team_a_active_players && initialGameState?.team_a_active_players.length > 0) {
                     newActivePlayers[selectedGame.team_a_id] = initialGameState.team_a_active_players;
-                    console.log('Using server data for team A:', initialGameState.team_a_active_players);
                 }
                 if (initialGameState?.team_b_active_players && initialGameState?.team_b_active_players.length > 0) {
                     newActivePlayers[selectedGame.team_b_id] = initialGameState.team_b_active_players;
-                    console.log('Using server data for team B:', initialGameState.team_b_active_players);
                 }
                 
                 // Only set initial starters if no server data and no current data
                 if (!newActivePlayers[selectedGame.team_a_id]) {
                     const teamAStarters = selectedGame.team_a.players.slice(0, 5).map(p => p.user?.id || p.id);
                     newActivePlayers[selectedGame.team_a_id] = teamAStarters;
-                    console.log('Setting initial starters for team A:', teamAStarters);
                 }
                 if (!newActivePlayers[selectedGame.team_b_id]) {
                     const teamBStarters = selectedGame.team_b.players.slice(0, 5).map(p => p.user?.id || p.id);
                     newActivePlayers[selectedGame.team_b_id] = teamBStarters;
-                    console.log('Setting initial starters for team B:', teamBStarters);
                 }
                 
                 return newActivePlayers;
@@ -169,9 +162,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 body: JSON.stringify(gameUpdateData)
             })
             .then(response => {
-                if (response.ok) {
-                    console.log('Game state updated successfully (no reload)');
-                } else {
+                if (!response.ok) {
                     console.error('Error updating game state:', response.statusText);
                     // Revert local state on error
                     setGameState(gameState);
@@ -382,8 +373,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     const recordFieldGoal = (playerId, points, made) => {
         if (!selectedGame) return;
         
-        console.log(`Recording field goal: Player ${playerId}, ${points}pt, Made: ${made}`);
-        
         setLocalPlayerStats(prev => {
             const currentStats = prev[playerId] || {
                 player_id: playerId,
@@ -426,7 +415,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 }
             }
             
-            console.log(`Updated stats for player ${playerId}:`, updatedStats);
             return { ...prev, [playerId]: updatedStats };
         });
         
@@ -528,47 +516,89 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         setIsSaving(true);
         
         try {
-            // Save game state with active players
+            // First, save game state with active players
             const gameUpdateData = {
                 ...gameState,
                 team_a_active_players: activePlayers[selectedGame.team_a_id] || [],
                 team_b_active_players: activePlayers[selectedGame.team_b_id] || []
             };
             
-            router.post(route('scoresheet.update-state', selectedGame.id), gameUpdateData, {
-                preserveState: true,
-                preserveScroll: true,
-                onSuccess: () => {
-                    console.log('Game state and active players saved successfully');
-                },
-                onError: (errors) => {
-                    console.error('Error saving game state:', errors);
-                }
+            // Save game state synchronously
+            await new Promise((resolve, reject) => {
+                router.post(route('scoresheet.update-state', selectedGame.id), gameUpdateData, {
+                    preserveState: true,
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        resolve();
+                    },
+                    onError: (errors) => {
+                        console.error('Error saving game state:', errors);
+                        reject(errors);
+                    }
+                });
             });
             
-            // Save all player stats using individual stat updates
+            // Prepare player stats for bulk save
+            const playerStatsToSave = [];
+            
             for (const [playerId, stats] of Object.entries(localPlayerStats)) {
-                // Save each stat type individually
-                const statTypes = ['points', 'assists', 'rebounds', 'steals', 'blocks', 'fouls', 'field_goals_made', 'field_goals_attempted', 'three_pointers_made', 'three_pointers_attempted', 'free_throws_made', 'free_throws_attempted'];
+                // Only save stats that have values > 0
+                const filteredStats = {
+                    player_id: playerId,
+                    points: stats.points || 0,
+                    assists: stats.assists || 0,
+                    rebounds: stats.rebounds || 0,
+                    steals: stats.steals || 0,
+                    blocks: stats.blocks || 0,
+                    fouls: stats.fouls || 0,
+                    field_goals_made: stats.field_goals_made || 0,
+                    field_goals_attempted: stats.field_goals_attempted || 0,
+                    three_pointers_made: stats.three_pointers_made || 0,
+                    three_pointers_attempted: stats.three_pointers_attempted || 0,
+                    free_throws_made: stats.free_throws_made || 0,
+                    free_throws_attempted: stats.free_throws_attempted || 0,
+                    turnovers: stats.turnovers || 0,
+                    minutes_played: stats.minutes_played || 0
+                };
                 
-                for (const statType of statTypes) {
-                    if (stats[statType] && stats[statType] > 0) {
-                        router.post(route('scoresheet.record-stat', selectedGame.id), {
-                            player_id: playerId,
-                            stat_type: statType,
-                            value: stats[statType],
-                            quarter: gameState.quarter
-                        }, {
-                            preserveState: true,
-                            preserveScroll: true,
+                playerStatsToSave.push(filteredStats);
+            }
+            
+            // Save player stats in bulk if there are any
+            if (playerStatsToSave.length > 0) {
+                const saveUrl = route('scoresheet.save-player-stats', selectedGame.id);
+                
+                await fetch(saveUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        player_stats: playerStatsToSave
+                    })
+                }).then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
                         });
                     }
-                }
+                    return response.json();
+                }).then(data => {
+                    console.log('Player stats saved successfully');
+                }).catch(error => {
+                    console.error('Error saving player stats:', error);
+                    throw error;
+                });
             }
             
             setHasUnsavedChanges(false);
+            alert('All changes saved successfully!');
+            
         } catch (error) {
             console.error('Error saving changes:', error);
+            alert('Error saving changes. Please try again.');
         } finally {
             setIsSaving(false);
         }
@@ -719,18 +749,21 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         saveActivePlayers();
     };
     
-    const saveActivePlayers = () => {
-        if (selectedGame) {
-            setIsSavingSubstitution(true);
-            
+    const saveActivePlayers = async () => {
+        if (!selectedGame) return;
+        
+        setIsSavingSubstitution(true);
+        
+        try {
+            // Save game state with active players and current stats
             const gameUpdateData = {
                 ...gameState,
                 team_a_active_players: activePlayers[selectedGame.team_a_id] || [],
                 team_b_active_players: activePlayers[selectedGame.team_b_id] || []
             };
             
-            // Use fetch instead of router.post to avoid page reload (non-blocking with cleanup)
-            fetch(route('scoresheet.update-state', selectedGame.id), {
+            // Save game state first
+            await fetch(route('scoresheet.update-state', selectedGame.id), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -738,20 +771,67 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify(gameUpdateData)
-            })
-            .then(response => {
-                if (response.ok) {
-                    console.log('Active players saved successfully (no reload)');
-                } else {
-                    console.error('Error saving active players:', response.statusText);
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to save game state: ${response.statusText}`);
                 }
-            })
-            .catch(error => {
-                console.error('Error saving active players:', error);
-            })
-            .finally(() => {
-                setIsSavingSubstitution(false);
+                return response.json();
             });
+            
+            // If there are unsaved player stats, save them too (without page reload)
+            if (hasUnsavedChanges && Object.keys(localPlayerStats).length > 0) {
+                const playerStatsToSave = [];
+                
+                for (const [playerId, stats] of Object.entries(localPlayerStats)) {
+                    const filteredStats = {
+                        player_id: playerId,
+                        points: stats.points || 0,
+                        assists: stats.assists || 0,
+                        rebounds: stats.rebounds || 0,
+                        steals: stats.steals || 0,
+                        blocks: stats.blocks || 0,
+                        fouls: stats.fouls || 0,
+                        field_goals_made: stats.field_goals_made || 0,
+                        field_goals_attempted: stats.field_goals_attempted || 0,
+                        three_pointers_made: stats.three_pointers_made || 0,
+                        three_pointers_attempted: stats.three_pointers_attempted || 0,
+                        free_throws_made: stats.free_throws_made || 0,
+                        free_throws_attempted: stats.free_throws_attempted || 0,
+                        turnovers: stats.turnovers || 0,
+                        minutes_played: stats.minutes_played || 0
+                    };
+                    
+                    playerStatsToSave.push(filteredStats);
+                }
+                
+                if (playerStatsToSave.length > 0) {
+                    await fetch(route('scoresheet.save-player-stats', selectedGame.id), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            player_stats: playerStatsToSave
+                        })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to save player stats: ${response.statusText}`);
+                        }
+                        return response.json();
+                    });
+                    
+                    // Clear unsaved changes flag since we saved everything
+                    setHasUnsavedChanges(false);
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error saving during substitution:', error);
+            // Don't show alert during substitution to avoid interrupting gameplay
+        } finally {
+            setIsSavingSubstitution(false);
         }
     };
     
@@ -980,7 +1060,9 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     
     const getTeamsForLeague = (leagueId) => {
         if (!leagueId || !allTeams) return [];
-        return allTeams.filter(team => team.league_id == leagueId);
+        return allTeams.filter(team => 
+            team.leagues && team.leagues.some(league => league.id == leagueId)
+        );
     };
     
     const getFilteredGames = () => {
@@ -1213,7 +1295,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             <div className="p-6">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-medium text-gray-900">League & Game Management</h3>
-                                    {(userRole === 'admin' || userRole === 'referee') && (
+                                    {(userRole === 'admin' || userRole === 'referee' || userRole === 'committee') && (
                                         <button
                                             onClick={() => setShowCreateMatchup(true)}
                                             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
@@ -1337,7 +1419,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                         <p className="text-gray-600">
                                             {selectedLeague ? 'No games available for the selected league' : 'No games available for live scoring'}
                                         </p>
-                                        {(userRole === 'admin' || userRole === 'referee') && (
+                                        {(userRole === 'admin' || userRole === 'referee' || userRole === 'committee') && (
                                             <button
                                                 onClick={() => setShowCreateMatchup(true)}
                                                 className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
@@ -2322,10 +2404,10 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                     >
                                         <option value="">Select Team A</option>
                                         {allTeams?.filter(team => 
-                                            !editMatchupForm.league_id || team.league_id?.toString() === editMatchupForm.league_id
+                                            !editMatchupForm.league_id || team.leagues?.some(league => league.id?.toString() === editMatchupForm.league_id)
                                         ).map(team => (
                                             <option key={team.id} value={team.id}>
-                                                {team.name} {team.league?.name ? `(${team.league.name})` : ''}
+                                                {team.name} {team.leagues?.length > 0 ? `(${team.leagues.map(l => l.name).join(', ')})` : ''}
                                             </option>
                                         ))}
                                     </select>
@@ -2344,10 +2426,10 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                         <option value="">Select Team B</option>
                                         {allTeams?.filter(team => 
                                             team.id?.toString() !== editMatchupForm.team_a_id && 
-                                            (!editMatchupForm.league_id || team.league_id?.toString() === editMatchupForm.league_id)
+                                            (!editMatchupForm.league_id || team.leagues?.some(league => league.id?.toString() === editMatchupForm.league_id))
                                         ).map(team => (
                                             <option key={team.id} value={team.id}>
-                                                {team.name} {team.league?.name ? `(${team.league.name})` : ''}
+                                                {team.name} {team.leagues?.length > 0 ? `(${team.leagues.map(l => l.name).join(', ')})` : ''}
                                             </option>
                                         ))}
                                     </select>

@@ -38,24 +38,19 @@ class BasketballLeagueSeeder extends Seeder
         // Create leagues first
         $this->command->info('Creating leagues...');
         League::create([
-            'name' => 'Republiq Premier League',
-            'description' => 'The premier basketball league featuring the best teams and players.',
-            'season' => '2024-2025',
-            'start_date' => now()->subMonths(2),
-            'end_date' => now()->addMonths(4),
-        ]);
-
-        League::create([
-            'name' => 'Republiq Development League',
-            'description' => 'Development league for upcoming basketball talent.',
-            'season' => '2024-2025',
-            'start_date' => now()->subMonths(1),
-            'end_date' => now()->addMonths(5),
+            'name' => 'QBRL Season 2',
+            'description' => 'Queens Basketball Recreation League Season 2',
+            'season' => '2025',
+            'start_date' => '2025-09-12',
+            'end_date' => '2025-12-31',
         ]);
 
         // Run seeders in order
+        $this->command->info('Creating demo users...');
+        $this->call(DemoUsersSeeder::class);
+        
         $this->command->info('Creating teams, coaches, and players...');
-        $this->call(TeamPlayerSeeder::class);
+        $this->call(NewTeamsAndPlayersSeeder::class);
         
         $this->command->info('Creating games...');
         $this->call(GameSeeder::class);
@@ -70,16 +65,18 @@ class BasketballLeagueSeeder extends Seeder
         $this->command->info('Referees: ' . User::where('role', 'referee')->count());
         $this->command->info('Games: ' . Game::count());
         $this->command->info('');
-        $this->command->info('🏆 League Distribution:');
-        $this->command->info('Premier League Teams: ' . Team::where('league_id', 1)->count());
-        $this->command->info('Development League Teams: ' . Team::where('league_id', 2)->count());
+        $this->command->info('🏆 League Information:');
+        $this->command->info('QBRL Season 2: September 12, 2025 - December 31, 2025');
+        $this->command->info('Total Teams in QBRL: ' . Team::count());
         $this->command->info('');
         $this->command->info('🔐 Login Credentials:');
-        $this->command->info('All users have password: password');
+        $this->command->info('All users have password: demo123');
         $this->command->info('Example logins:');
-        $this->command->info('- Coach: thunderhawkscoach@example.com');
-        $this->command->info('- Player: marcus.johnson@example.com');
-        $this->command->info('- Referee: referee.smith@example.com');
-        $this->command->info('- Admin: admin@republiq.com (if exists)');
+        $this->command->info('- Admin: admin@pbl.com');
+        $this->command->info('- Coach: coach@pbl.com');
+        $this->command->info('- Player: player@pbl.com');
+        $this->command->info('- Referee: referee@pbl.com');
+        $this->command->info('- Team Coaches: coach.stars@pbl.com, coach.bwood@pbl.com, etc.');
+        $this->command->info('- Team Players: juan.perez@pbl.com, ryu.primero@pbl.com, etc.');
     }
 }

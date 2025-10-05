@@ -9,6 +9,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
             case 'coach': return <Target className="h-6 w-6 text-blue-600" />
             case 'player': return <Users className="h-6 w-6 text-orange-600" />
             case 'referee': return <Zap className="h-6 w-6 text-yellow-600" />
+            case 'committee': return <Shield className="h-6 w-6 text-purple-600" />
             default: return <Trophy className="h-6 w-6 text-gray-600" />
         }
     }
@@ -19,6 +20,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
             case 'coach': return 'text-blue-600 bg-blue-50 border-blue-200'
             case 'player': return 'text-orange-600 bg-orange-50 border-orange-200'
             case 'referee': return 'text-yellow-600 bg-yellow-50 border-yellow-200'
+            case 'committee': return 'text-purple-600 bg-purple-50 border-purple-200'
             default: return 'text-gray-600 bg-gray-50 border-gray-200'
         }
     }
@@ -47,6 +49,11 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                     { label: 'Join Team', href: route('teams.index'), icon: Users },
                     { label: 'My Stats', href: '#', icon: BarChart3 }
                 ];
+            case 'committee':
+                return [
+                    { label: 'Live Scoring', href: route('scoresheet.index'), icon: BarChart3 },
+                    { label: 'Game Stats', href: '#', icon: Trophy }
+                ];
             default:
                 return [];
         }
@@ -60,6 +67,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                         auth.user.role === 'admin' ? 'bg-rexa00' :
                         auth.user.role === 'coach' ? 'bg-blue-100' :
                         auth.user.role === 'referee' ? 'bg-yellow-100' :
+                        auth.user.role === 'committee' ? 'bg-purple-100' :
                         'bg-orange-100'
                     }`}>
                         {getRoleIcon(auth.user.role)}
@@ -113,6 +121,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                     auth.user.role === 'admin' ? 'bg-red-50 border-red-200' :
                                     auth.user.role === 'coach' ? 'bg-blue-50 border-blue-200' :
                                     auth.user.role === 'referee' ? 'bg-yellow-50 border-yellow-200' :
+                                    auth.user.role === 'committee' ? 'bg-purple-50 border-purple-200' :
                                     'bg-orange-50 border-orange-200'
                                 }`}>
                                     <div className="flex items-center gap-3">
@@ -122,6 +131,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                                 auth.user.role === 'admin' ? 'text-red-800' :
                                                 auth.user.role === 'coach' ? 'text-blue-800' :
                                                 auth.user.role === 'referee' ? 'text-yellow-800' :
+                                                auth.user.role === 'committee' ? 'text-purple-800' :
                                                 'text-orange-800'
                                             }`}>{redirectMessage}</p>
                                             {availableFeatures && (
@@ -129,6 +139,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                                     auth.user.role === 'admin' ? 'text-red-600' :
                                                     auth.user.role === 'coach' ? 'text-blue-600' :
                                                     auth.user.role === 'referee' ? 'text-yellow-600' :
+                                                    auth.user.role === 'committee' ? 'text-purple-600' :
                                                     'text-orange-600'
                                                 }`}>
                                                     Available features: {availableFeatures.join(', ')}
@@ -168,6 +179,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                     auth.user.role === 'admin' ? 'bg-gradient-to-br from-red-50 to-pink-50 border-red-200' :
                                     auth.user.role === 'coach' ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200' :
                                     auth.user.role === 'referee' ? 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200' :
+                                    auth.user.role === 'committee' ? 'bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200' :
                                     'bg-gradient-to-br from-orange-50 to-red-50 border-orange-200'
                                 }`}>
                                     <h4 className="font-semibold text-gray-900 mb-3">Quick Actions</h4>
@@ -177,6 +189,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                             const colorClass = auth.user.role === 'admin' ? 'text-red-600 group-hover:text-red-700' :
                                                              auth.user.role === 'coach' ? 'text-blue-600 group-hover:text-blue-700' :
                                                              auth.user.role === 'referee' ? 'text-yellow-600 group-hover:text-yellow-700' :
+                                                             auth.user.role === 'committee' ? 'text-purple-600 group-hover:text-purple-700' :
                                                              'text-orange-600 group-hover:text-orange-700';
                                             return (
                                                 <Link
@@ -296,6 +309,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                             {auth.user.role === 'coach' && 'Coach Dashboard'}
                                             {auth.user.role === 'player' && 'Player Dashboard'}
                                             {auth.user.role === 'referee' && 'Referee Dashboard'}
+                                            {auth.user.role === 'committee' && 'Committee Dashboard'}
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {auth.user.role === 'coach' && (
@@ -359,6 +373,28 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                                             <div>
                                                                 <h4 className="font-medium text-gray-900">Match Schedule</h4>
                                                                 <p className="text-sm text-gray-600">View assigned matches</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+                                            {auth.user.role === 'committee' && (
+                                                <>
+                                                    <Link href={route('scoresheet.index')} className="p-4 border border-purple-200 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer group">
+                                                        <div className="flex items-center gap-3">
+                                                            <BarChart3 className="h-6 w-6 text-purple-600" />
+                                                            <div>
+                                                                <h4 className="font-medium text-gray-900">Live Scoring</h4>
+                                                                <p className="text-sm text-gray-600">Enter live game statistics</p>
+                                                            </div>
+                                                        </div>
+                                                    </Link>
+                                                    <div className="p-4 border border-purple-200 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">
+                                                        <div className="flex items-center gap-3">
+                                                            <Trophy className="h-6 w-6 text-purple-600" />
+                                                            <div>
+                                                                <h4 className="font-medium text-gray-900">Game Stats</h4>
+                                                                <p className="text-sm text-gray-600">View game statistics</p>
                                                             </div>
                                                         </div>
                                                     </div>

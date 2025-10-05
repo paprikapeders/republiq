@@ -44,5 +44,21 @@ class DemoUsersSeeder extends Seeder
             'role' => 'referee',
             'phone' => '+63 912 345 6782',
         ]);
+
+        \App\Models\User::create([
+            'name' => 'Sarah Committee',
+            'email' => 'committee1@pbl.com',
+            'password' => bcrypt('demo123'),
+            'role' => 'committee',
+            'phone' => '+63 912 345 6783',
+        ]);
+
+        \App\Models\User::create([
+            'name' => 'Mark Committee',
+            'email' => 'committee2@pbl.com',
+            'password' => bcrypt('demo123'),
+            'role' => 'committee',
+            'phone' => '+63 912 345 6784',
+        ]);
     }
 }
