@@ -68,38 +68,24 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
 
     // Initialize local stats and active players from server data
     useEffect(() => {
-        console.log('=== STATS INITIALIZATION DEBUG ===');
-        console.log('selectedGame:', selectedGame);
-        console.log('selectedGame.player_stats:', selectedGame?.player_stats);
-        console.log('Team A players structure:', selectedGame?.team_a?.players);
-        console.log('Team B players structure:', selectedGame?.team_b?.players);
-        
         if (selectedGame?.player_stats && selectedGame.player_stats.length > 0) {
-            console.log('Processing player stats, count:', selectedGame.player_stats.length);
-            
             const statsMap = {};
             
-            selectedGame.player_stats.forEach((stat, index) => {
-                console.log(`Processing stat ${index + 1}:`, stat);
-                console.log('Full stat object structure:', JSON.stringify(stat, null, 2));
-                
+            selectedGame.player_stats.forEach((stat) => {
                 // Try multiple ways to get the user ID for maximum compatibility
                 let userId = null;
                 
                 // Method 1: stat.player.user.id (from relationship)
                 if (stat.player?.user?.id) {
                     userId = stat.player.user.id;
-                    console.log(`Found userId via stat.player.user.id: ${userId}`);
                 }
                 // Method 2: stat.player.user_id (direct field)
                 else if (stat.player?.user_id) {
                     userId = stat.player.user_id;
-                    console.log(`Found userId via stat.player.user_id: ${userId}`);
                 }
                 // Method 3: stat.user_id (fallback)
                 else if (stat.user_id) {
                     userId = stat.user_id;
-                    console.log(`Found userId via stat.user_id: ${userId}`);
                 }
                 // Method 4: Based on the logs, try to extract from the structure
                 else if (stat.player_id && selectedGame.team_a?.players) {
@@ -108,14 +94,10 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                     const player = allPlayers.find(p => p.id === stat.player_id);
                     if (player?.user_id) {
                         userId = player.user_id;
-                        console.log(`Found userId via player lookup: ${userId} (player_id: ${stat.player_id})`);
                     } else if (player?.user?.id) {
                         userId = player.user.id;
-                        console.log(`Found userId via player.user.id lookup: ${userId} (player_id: ${stat.player_id})`);
                     }
                 }
-                
-                console.log(`Final userId determined: ${userId}`);
                 
                 if (userId) {
                     // Create a clean stats object
@@ -138,16 +120,11 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                     };
                     
                     statsMap[userId] = cleanStats;
-                    console.log(`Mapped stats for userId ${userId}:`, cleanStats);
-                } else {
-                    console.warn('Could not find userId for stat:', stat);
                 }
             });
             
-            console.log('Final statsMap:', statsMap);
             setLocalPlayerStats(statsMap);
         } else {
-            console.log('No player stats found or empty array');
             setLocalPlayerStats({});
         }
         
@@ -320,8 +297,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
 
     const openEditMatchup = () => {
         if (selectedGame) {
-            console.log('Opening edit matchup for game:', selectedGame);
-            
             // Format date for datetime-local input
             let formattedDate = '';
             if (selectedGame.date) {
@@ -343,14 +318,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 venue: selectedGame.venue || ''
             });
             
-            console.log('Edit form populated with:', {
-                league_id: selectedGame.league_id || selectedGame.league?.id,
-                team_a_id: selectedGame.team_a_id || selectedGame.teamA?.id,
-                team_b_id: selectedGame.team_b_id || selectedGame.teamB?.id,
-                date: formattedDate,
-                venue: selectedGame.venue
-            });
-            
             setShowEditMatchup(true);
         }
     };
@@ -361,10 +328,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             alert('No game selected');
             return;
         }
-
-        console.log('Submitting matchup update:', editMatchupForm);
-        console.log('Game ID:', selectedGame.id);
-        console.log('Route URL:', route('scoresheet.update-matchup', selectedGame.id));
 
         // Basic validation
         if (!editMatchupForm.team_a_id || !editMatchupForm.team_b_id || !editMatchupForm.date) {
@@ -380,7 +343,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         router.put(route('scoresheet.update-matchup', selectedGame.id), editMatchupForm, {
             preserveState: true,
             onSuccess: (response) => {
-                console.log('Matchup updated successfully:', response);
                 alert('Matchup updated successfully!');
                 setShowEditMatchup(false);
                 setEditMatchupForm({
@@ -408,7 +370,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 }
             },
             onFinish: () => {
-                console.log('Matchup update request finished');
+                // Request finished
             }
         });
     };
@@ -641,7 +603,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         preserveState: true,
                         preserveScroll: true,
                         onSuccess: () => {
-                            console.log('Player stats saved successfully');
                             resolve();
                         },
                         onError: (errors) => {
@@ -673,9 +634,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
 
     const undoLastAction = () => {
-        console.log('=== UNDO LAST ACTION DEBUG ===');
-        console.log('Refreshing from server data...');
-        
         // Simple undo by refreshing from server data
         if (selectedGame?.player_stats && selectedGame.player_stats.length > 0) {
             const statsMap = {};
@@ -705,7 +663,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 }
             });
             
-            console.log('Restored statsMap:', statsMap);
             setLocalPlayerStats(statsMap);
             setGameState(prev => ({
                 ...prev,
@@ -713,8 +670,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 team_b_score: selectedGame.team_b_score || 0
             }));
             setHasUnsavedChanges(false);
-        } else {
-            console.log('No stats to restore');
         }
     };
 
@@ -1199,15 +1154,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     const PlayerRow = ({ player, teamColor, isActive = true }) => {
         const playerId = player.user?.id || player.id;
         const stats = localPlayerStats[playerId] || {};
-        
-        // Debug logging for player stats
-        if (player.user?.name === 'Test Player' || Object.keys(localPlayerStats).length > 0) {
-            console.log(`PlayerRow Debug - ${player.user?.name || player.name}:`);
-            console.log('  playerId:', playerId);
-            console.log('  player object:', player);
-            console.log('  stats found:', stats);
-            console.log('  localPlayerStats keys:', Object.keys(localPlayerStats));
-        }
         
         if (!isActive) return null;
         
@@ -1728,36 +1674,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
 
             <div className="py-3">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-2">
-                    
-                    {/* Debug Panel - Remove this after debugging */}
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs">
-                        <h4 className="font-bold text-yellow-800 mb-2">Debug Info (Remove this after fixing)</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <strong>Raw Player Stats Count:</strong> {selectedGame?.player_stats?.length || 0}
-                                <br />
-                                <strong>Loaded Local Stats Keys:</strong> {Object.keys(localPlayerStats).length}
-                                <br />
-                                <strong>Local Stats Keys:</strong> [{Object.keys(localPlayerStats).join(', ')}]
-                            </div>
-                            <div>
-                                <strong>Team A User IDs:</strong> [
-                                {selectedGame?.team_a?.players?.map(p => p.user?.id || p.user_id).filter(Boolean).join(', ')}]
-                                <br />
-                                <strong>Team B User IDs:</strong> [
-                                {selectedGame?.team_b?.players?.map(p => p.user?.id || p.user_id).filter(Boolean).join(', ')}]
-                            </div>
-                            <div>
-                                <strong>Raw Player Stats Sample:</strong>
-                                <pre className="text-xs bg-yellow-100 p-1 rounded mt-1 overflow-auto max-h-20">
-                                    {JSON.stringify(selectedGame?.player_stats?.slice(0, 2), null, 2)}
-                                </pre>
-                            </div>
-                        </div>
-                        <div className="mt-2">
-                            <strong>Expected User IDs from logs:</strong> [13, 14, 15, 16, 39, 41, 43, 46, 47]
-                        </div>
-                    </div>
                     
                     {/* Game Header - Compact */}
                     <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-3">

@@ -70,14 +70,6 @@ class LiveScoresheetController extends Controller
             'playerStats.player.user'
         ]);
         
-        // Debug logging for player stats
-        \Log::info('LiveScoresheet Debug - Game ID: ' . $game->id);
-        \Log::info('Player Stats Count: ' . $game->playerStats->count());
-        foreach ($game->playerStats as $stat) {
-            $userId = $stat->player ? $stat->player->user_id : 'null';
-            \Log::info('Stat ID: ' . $stat->id . ' Player ID: ' . $stat->player_id . ' User ID: ' . $userId . ' Points: ' . $stat->points);
-        }
-        
         // Get current game state
         $gameState = [
             'quarter' => $game->current_quarter ?: 1,
@@ -404,18 +396,14 @@ class LiveScoresheetController extends Controller
         
         try {
             $playerStats = $request->input('player_stats', []);
-            \Log::info('Received player stats data:', ['count' => count($playerStats), 'data' => $playerStats]);
             
             foreach ($playerStats as $statData) {
                 $playerId = $statData['player_id'];
-                \Log::info('Processing player stats for user ID:', ['user_id' => $playerId]);
                 
                 // Find the actual player record using user_id
                 $player = \App\Models\Player::where('user_id', $playerId)->first();
-                \Log::info('Player lookup result:', ['user_id' => $playerId, 'player_found' => $player ? $player->id : 'not found']);
                 
                 if (!$player) {
-                    \Log::warning('Player not found for user_id:', ['user_id' => $playerId]);
                     continue; // Skip if player not found
                 }
                 
@@ -438,8 +426,6 @@ class LiveScoresheetController extends Controller
                 ];
                 
                 // Use updateOrCreate to either update existing stats or create new ones
-                \Log::info('Saving stats for player:', ['game_id' => $game->id, 'player_id' => $player->id, 'stats' => $statsToSave]);
-                
                 $playerStat = PlayerStat::updateOrCreate(
                     [
                         'game_id' => $game->id,
@@ -447,15 +433,11 @@ class LiveScoresheetController extends Controller
                     ],
                     $statsToSave
                 );
-                
-                \Log::info('Player stat saved:', ['id' => $playerStat->id, 'was_recently_created' => $playerStat->wasRecentlyCreated]);
             }
             
             return redirect()->back()->with('success', 'Player stats saved successfully');
             
         } catch (\Exception $e) {
-            \Log::error('Error saving player stats: ' . $e->getMessage());
-            
             return redirect()->back()->withErrors(['error' => 'Error saving player stats: ' . $e->getMessage()]);
         }
     }
