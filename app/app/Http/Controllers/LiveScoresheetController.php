@@ -391,7 +391,7 @@ class LiveScoresheetController extends Controller
         $user = Auth::user();
         
         if (!in_array($user->role, ['coach', 'referee', 'committee', 'admin'])) {
-            return response()->json(['error' => 'Unauthorized access.'], 403);
+            return redirect()->back()->withErrors(['error' => 'Unauthorized access.']);
         }
         
         try {
@@ -443,19 +443,12 @@ class LiveScoresheetController extends Controller
                 \Log::info('Player stat saved:', ['id' => $playerStat->id, 'was_recently_created' => $playerStat->wasRecentlyCreated]);
             }
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Player stats saved successfully',
-                'stats_saved' => count($playerStats)
-            ]);
+            return redirect()->back()->with('success', 'Player stats saved successfully');
             
         } catch (\Exception $e) {
             \Log::error('Error saving player stats: ' . $e->getMessage());
             
-            return response()->json([
-                'success' => false,
-                'message' => 'Error saving player stats: ' . $e->getMessage()
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Error saving player stats: ' . $e->getMessage()]);
         }
     }
 }
