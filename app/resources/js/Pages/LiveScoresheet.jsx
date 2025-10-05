@@ -72,7 +72,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             const statsMap = {};
             selectedGame.player_stats.forEach(stat => {
                 // Use user_id for consistency with frontend player identification
-                const userId = stat.player?.user_id;
+                const userId = stat.player?.user_id || stat.player_id;
                 if (userId) {
                     statsMap[userId] = { ...stat };
                 }
@@ -164,14 +164,14 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             .then(response => {
                 if (!response.ok) {
                     console.error('Error updating game state:', response.statusText);
-                    // Revert local state on error
-                    setGameState(gameState);
+                    // Don't revert state on error to prevent timer reset
+                    // The local state should remain as the user intended
                 }
             })
             .catch(error => {
                 console.error('Error updating game state:', error);
-                // Revert local state on error
-                setGameState(gameState);
+                // Don't revert state on error to prevent timer reset
+                // The local state should remain as the user intended
             });
         }
     };
@@ -542,26 +542,32 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             const playerStatsToSave = [];
             
             for (const [playerId, stats] of Object.entries(localPlayerStats)) {
-                // Only save stats that have values > 0
-                const filteredStats = {
-                    player_id: playerId,
-                    points: stats.points || 0,
-                    assists: stats.assists || 0,
-                    rebounds: stats.rebounds || 0,
-                    steals: stats.steals || 0,
-                    blocks: stats.blocks || 0,
-                    fouls: stats.fouls || 0,
-                    field_goals_made: stats.field_goals_made || 0,
-                    field_goals_attempted: stats.field_goals_attempted || 0,
-                    three_pointers_made: stats.three_pointers_made || 0,
-                    three_pointers_attempted: stats.three_pointers_attempted || 0,
-                    free_throws_made: stats.free_throws_made || 0,
-                    free_throws_attempted: stats.free_throws_attempted || 0,
-                    turnovers: stats.turnovers || 0,
-                    minutes_played: stats.minutes_played || 0
-                };
+                // Find the actual player to get the correct player_id for the database
+                const allPlayers = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])];
+                const player = allPlayers.find(p => (p.user?.id || p.id) == playerId);
                 
-                playerStatsToSave.push(filteredStats);
+                if (player) {
+                    // Only save stats that have values > 0
+                    const filteredStats = {
+                        player_id: player.id, // Use the actual player.id for database
+                        points: stats.points || 0,
+                        assists: stats.assists || 0,
+                        rebounds: stats.rebounds || 0,
+                        steals: stats.steals || 0,
+                        blocks: stats.blocks || 0,
+                        fouls: stats.fouls || 0,
+                        field_goals_made: stats.field_goals_made || 0,
+                        field_goals_attempted: stats.field_goals_attempted || 0,
+                        three_pointers_made: stats.three_pointers_made || 0,
+                        three_pointers_attempted: stats.three_pointers_attempted || 0,
+                        free_throws_made: stats.free_throws_made || 0,
+                        free_throws_attempted: stats.free_throws_attempted || 0,
+                        turnovers: stats.turnovers || 0,
+                        minutes_played: stats.minutes_played || 0
+                    };
+                    
+                    playerStatsToSave.push(filteredStats);
+                }
             }
             
             // Save player stats in bulk if there are any
@@ -618,7 +624,11 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         if (selectedGame?.player_stats) {
             const statsMap = {};
             selectedGame.player_stats.forEach(stat => {
-                statsMap[stat.player_id] = { ...stat };
+                // Use user_id for consistency with frontend player identification
+                const userId = stat.player?.user_id || stat.player_id;
+                if (userId) {
+                    statsMap[userId] = { ...stat };
+                }
             });
             setLocalPlayerStats(statsMap);
             setGameState(prev => ({
@@ -783,25 +793,31 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 const playerStatsToSave = [];
                 
                 for (const [playerId, stats] of Object.entries(localPlayerStats)) {
-                    const filteredStats = {
-                        player_id: playerId,
-                        points: stats.points || 0,
-                        assists: stats.assists || 0,
-                        rebounds: stats.rebounds || 0,
-                        steals: stats.steals || 0,
-                        blocks: stats.blocks || 0,
-                        fouls: stats.fouls || 0,
-                        field_goals_made: stats.field_goals_made || 0,
-                        field_goals_attempted: stats.field_goals_attempted || 0,
-                        three_pointers_made: stats.three_pointers_made || 0,
-                        three_pointers_attempted: stats.three_pointers_attempted || 0,
-                        free_throws_made: stats.free_throws_made || 0,
-                        free_throws_attempted: stats.free_throws_attempted || 0,
-                        turnovers: stats.turnovers || 0,
-                        minutes_played: stats.minutes_played || 0
-                    };
+                    // Find the actual player to get the correct player_id for the database
+                    const allPlayers = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])];
+                    const player = allPlayers.find(p => (p.user?.id || p.id) == playerId);
                     
-                    playerStatsToSave.push(filteredStats);
+                    if (player) {
+                        const filteredStats = {
+                            player_id: player.id, // Use the actual player.id for database
+                            points: stats.points || 0,
+                            assists: stats.assists || 0,
+                            rebounds: stats.rebounds || 0,
+                            steals: stats.steals || 0,
+                            blocks: stats.blocks || 0,
+                            fouls: stats.fouls || 0,
+                            field_goals_made: stats.field_goals_made || 0,
+                            field_goals_attempted: stats.field_goals_attempted || 0,
+                            three_pointers_made: stats.three_pointers_made || 0,
+                            three_pointers_attempted: stats.three_pointers_attempted || 0,
+                            free_throws_made: stats.free_throws_made || 0,
+                            free_throws_attempted: stats.free_throws_attempted || 0,
+                            turnovers: stats.turnovers || 0,
+                            minutes_played: stats.minutes_played || 0
+                        };
+                        
+                        playerStatsToSave.push(filteredStats);
+                    }
                 }
                 
                 if (playerStatsToSave.length > 0) {
@@ -1840,7 +1856,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                                         .find(p => (p.user?.id || p.id) === playerId);
                                                     return (
                                                         <option key={playerId} value={playerId}>
-                                                            #{player?.number || '00'} {player?.user?.name || player?.name}
+                                                            #{player?.jersey_number || player?.number || '--'} {player?.user?.name || player?.name}
                                                         </option>
                                                     );
                                                 })}
@@ -1861,7 +1877,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                                     .filter(p => !activePlayers[selectedTeamForSub]?.includes(p.user?.id || p.id))
                                                     .map(player => (
                                                         <option key={player.id} value={player.user?.id || player.id}>
-                                                            #{player.number || '00'} {player.user?.name || player.name}
+                                                            #{player.jersey_number || player.number || '--'} {player.user?.name || player.name}
                                                         </option>
                                                     ))}
                                             </select>
@@ -1919,7 +1935,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                                                         .find(p => (p.user?.id || p.id) === playerId);
                                                                     return (
                                                                         <option key={playerId} value={playerId}>
-                                                                            #{player?.number || '00'} {player?.user?.name || player?.name}
+                                                                            #{player?.jersey_number || player?.number || '--'} {player?.user?.name || player?.name}
                                                                         </option>
                                                                     );
                                                                 })}
@@ -1944,7 +1960,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                                                     })
                                                                     .map(player => (
                                                                         <option key={player.id} value={player.user?.id || player.id}>
-                                                                            #{player.number || '00'} {player.user?.name || player.name}
+                                                                            #{player.jersey_number || player.number || '--'} {player.user?.name || player.name}
                                                                         </option>
                                                                     ))}
                                                             </select>
@@ -2032,7 +2048,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                                             {isActive && <span className="text-white text-xs">✓</span>}
                                                         </div>
                                                         <div className="font-mono font-bold text-sm text-gray-600">
-                                                            #{player.number || '00'}
+                                                            #{player.jersey_number || player.number || '--'}
                                                         </div>
                                                         <div className="font-medium">
                                                             {player.user?.name || player.name}
