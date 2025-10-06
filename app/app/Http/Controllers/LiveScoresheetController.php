@@ -21,10 +21,9 @@ class LiveScoresheetController extends Controller
             return redirect()->route('dashboard')->withErrors(['error' => 'Unauthorized access.']);
         }
         
-        // Get available games for live scoring
+        // Get all games (except cancelled) for live scoring - let frontend handle filtering
         $games = Game::with(['teamA', 'teamB', 'league'])
-            ->where('status', 'scheduled')
-            ->orWhere('status', 'in_progress')
+            ->where('status', '!=', 'cancelled')
             ->orderBy('date', 'asc')
             ->get();
             
