@@ -9,12 +9,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-    return redirect()->route('login');
-});
+Route::get('/', [App\Http\Controllers\PublicController::class, 'home'])->name('home');
+Route::get('/games/{game}', [App\Http\Controllers\PublicController::class, 'gameDetail'])->name('public.game.detail');
+Route::get('/teams/{team}', [App\Http\Controllers\PublicController::class, 'teamDetail'])->name('public.team.detail');
 
 Route::get('/dashboard', function () {
     $user = auth()->user();
@@ -63,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('admin')->group(function () {
         Route::post('/admin/teams/add-player', [TeamManagementController::class, 'addPlayerToTeam'])->name('admin.teams.add-player');
         Route::delete('/admin/teams/remove-player/{player}', [TeamManagementController::class, 'adminRemovePlayer'])->name('admin.teams.remove-player');
+        Route::get('/admin/teams/edit-player/{player}', [TeamManagementController::class, 'editPlayer'])->name('admin.teams.edit-player');
         Route::put('/admin/teams/update-player/{player}', [TeamManagementController::class, 'updatePlayer'])->name('admin.teams.update-player');
     });
     
@@ -75,6 +73,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/scoresheet/{game}/field-goal', [LiveScoresheetController::class, 'recordFieldGoal'])->name('scoresheet.record-field-goal');
     Route::post('/scoresheet/{game}/stat', [LiveScoresheetController::class, 'recordPlayerStat'])->name('scoresheet.record-stat');
     Route::post('/scoresheet/{game}/save-player-stats', [LiveScoresheetController::class, 'savePlayerStats'])->name('scoresheet.save-player-stats');
+    Route::post('/scoresheet/{game}/complete', [LiveScoresheetController::class, 'completeGame'])->name('scoresheet.complete-game');
     
     // Team-League Management Routes (Admin Only)
     Route::get('/team-leagues', [TeamLeagueController::class, 'index'])->name('team-leagues.index');

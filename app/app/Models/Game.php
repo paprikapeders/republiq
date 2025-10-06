@@ -13,7 +13,8 @@ class Game extends Model {
         'team_a_score', 'team_b_score', 'current_quarter', 'time_remaining',
         'team_a_fouls', 'team_b_fouls', 'team_a_timeouts', 'team_b_timeouts',
         'team_a_active_players', 'team_b_active_players',
-        'total_quarters', 'minutes_per_quarter', 'timeouts_per_quarter'
+        'total_quarters', 'minutes_per_quarter', 'timeouts_per_quarter',
+        'completed_at'
     ];
 
     protected $casts = [

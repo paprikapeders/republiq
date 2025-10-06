@@ -21,4 +21,8 @@ class Player extends Model {
     public function stats() {
         return $this->hasMany(PlayerStat::class);
     }
+
+    public function playerStats() {
+        return $this->hasMany(PlayerStat::class);
+    }
 }

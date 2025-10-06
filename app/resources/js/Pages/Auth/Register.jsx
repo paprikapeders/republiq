@@ -1,5 +1,5 @@
 import { Head, useForm, Link } from '@inertiajs/react'
-import { Trophy, Users, Target, Zap } from 'lucide-react'
+import { Trophy, Users, Target, Zap, ArrowLeft } from 'lucide-react'
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -23,17 +23,26 @@ export default function Register() {
         <>
             <Head title="Register" />
 
-            <div className="min-h-screen basketball-court-bg flex items-center justify-center p-4">
-                <div className="w-full max-w-md mx-auto basketball-card-shadow border-2 border-orange-200 bg-white/95 backdrop-blur-sm rounded-lg overflow-hidden">
+            <div className="min-h-screen bg-[#0f0f1e] flex items-center justify-center p-4">
+                {/* Back to Home Button */}
+                <Link
+                    href="/"
+                    className="absolute top-6 left-6 text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Home
+                </Link>
+
+                <div className="w-full max-w-md mx-auto bg-[#1a1a2e] border border-[#16213e] rounded-lg overflow-hidden shadow-2xl">
                     {/* Header */}
-                    <div className="text-center bg-gradient-to-r from-blue-500 to-orange-500 text-white p-6">
+                    <div className="text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6">
                         <div className="flex items-center justify-center gap-3 mb-2">
-                            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/30">
-                                <Trophy className="h-7 w-7 text-white basketball-bounce" />
+                            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                <Trophy className="h-7 w-7 text-white" />
                             </div>
                             <div className="text-left">
                                 <h1 className="text-white text-xl font-semibold">Join the League</h1>
-                                <p className="text-blue-100 text-sm">Republiq Basketball League</p>
+                                <p className="text-blue-100 text-sm">Philippine Basketball League</p>
                             </div>
                         </div>
                     </div>
@@ -43,27 +52,27 @@ export default function Register() {
                         <form onSubmit={submit} className="space-y-4">
                             {/* Name */}
                             <div className="space-y-2">
-                                <label htmlFor="name" className="text-sm font-medium text-gray-700">
+                                <label htmlFor="name" className="text-sm font-medium text-gray-300">
                                     Full Name
                                 </label>
                                 <input
                                     id="name"
                                     name="name"
                                     value={data.name}
-                                    className="w-full px-3 py-2 border border-orange-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     autoComplete="name"
                                     placeholder="Enter your full name"
                                     onChange={(e) => setData('name', e.target.value)}
                                     required
                                 />
                                 {errors.name && (
-                                    <div className="text-sm text-red-600">{errors.name}</div>
+                                    <div className="text-sm text-red-400">{errors.name}</div>
                                 )}
                             </div>
 
                             {/* Email */}
                             <div className="space-y-2">
-                                <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                                <label htmlFor="email" className="text-sm font-medium text-gray-300">
                                     Email
                                 </label>
                                 <input
@@ -71,20 +80,20 @@ export default function Register() {
                                     type="email"
                                     name="email"
                                     value={data.email}
-                                    className="w-full px-3 py-2 border border-orange-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     autoComplete="username"
                                     placeholder="Enter your email"
                                     onChange={(e) => setData('email', e.target.value)}
                                     required
                                 />
                                 {errors.email && (
-                                    <div className="text-sm text-red-600">{errors.email}</div>
+                                    <div className="text-sm text-red-400">{errors.email}</div>
                                 )}
                             </div>
 
                             {/* Phone */}
                             <div className="space-y-2">
-                                <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                                <label htmlFor="phone" className="text-sm font-medium text-gray-300">
                                     Phone (Optional)
                                 </label>
                                 <input
@@ -92,25 +101,25 @@ export default function Register() {
                                     type="tel"
                                     name="phone"
                                     value={data.phone}
-                                    className="w-full px-3 py-2 border border-orange-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="Enter your phone number"
                                     onChange={(e) => setData('phone', e.target.value)}
                                 />
                                 {errors.phone && (
-                                    <div className="text-sm text-red-600">{errors.phone}</div>
+                                    <div className="text-sm text-red-400">{errors.phone}</div>
                                 )}
                             </div>
 
                             {/* Role */}
                             <div className="space-y-2">
-                                <label htmlFor="role" className="text-sm font-medium text-gray-700">
+                                <label htmlFor="role" className="text-sm font-medium text-gray-300">
                                     Role
                                 </label>
                                 <select
                                     id="role"
                                     name="role"
                                     value={data.role}
-                                    className="w-full px-3 py-2 border border-orange-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     onChange={(e) => setData('role', e.target.value)}
                                     required
                                 >
@@ -120,13 +129,13 @@ export default function Register() {
                                     <option value="referee">Referee</option>
                                 </select>
                                 {errors.role && (
-                                    <div className="text-sm text-red-600">{errors.role}</div>
+                                    <div className="text-sm text-red-400">{errors.role}</div>
                                 )}
                             </div>
 
                             {/* Password */}
                             <div className="space-y-2">
-                                <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                                <label htmlFor="password" className="text-sm font-medium text-gray-300">
                                     Password
                                 </label>
                                 <input
@@ -134,20 +143,20 @@ export default function Register() {
                                     type="password"
                                     name="password"
                                     value={data.password}
-                                    className="w-full px-3 py-2 border border-orange-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     autoComplete="new-password"
                                     placeholder="Create a password"
                                     onChange={(e) => setData('password', e.target.value)}
                                     required
                                 />
                                 {errors.password && (
-                                    <div className="text-sm text-red-600">{errors.password}</div>
+                                    <div className="text-sm text-red-400">{errors.password}</div>
                                 )}
                             </div>
 
                             {/* Confirm Password */}
                             <div className="space-y-2">
-                                <label htmlFor="password_confirmation" className="text-sm font-medium text-gray-700">
+                                <label htmlFor="password_confirmation" className="text-sm font-medium text-gray-300">
                                     Confirm Password
                                 </label>
                                 <input
@@ -155,14 +164,14 @@ export default function Register() {
                                     type="password"
                                     name="password_confirmation"
                                     value={data.password_confirmation}
-                                    className="w-full px-3 py-2 border border-orange-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     autoComplete="new-password"
                                     placeholder="Confirm your password"
                                     onChange={(e) => setData('password_confirmation', e.target.value)}
                                     required
                                 />
                                 {errors.password_confirmation && (
-                                    <div className="text-sm text-red-600">{errors.password_confirmation}</div>
+                                    <div className="text-sm text-red-400">{errors.password_confirmation}</div>
                                 )}
                             </div>
 
@@ -175,15 +184,15 @@ export default function Register() {
                                         type="checkbox"
                                         checked={data.waiver_accepted}
                                         onChange={(e) => setData('waiver_accepted', e.target.checked)}
-                                        className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-orange-300 rounded"
+                                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-[#16213e] bg-[#0f0f1e] rounded"
                                         required
                                     />
                                     <div className="text-sm">
-                                        <label htmlFor="waiver_accepted" className="font-medium text-gray-700">
+                                        <label htmlFor="waiver_accepted" className="font-medium text-gray-300">
                                             I agree to the Waiver and Release of Liability
                                         </label>
-                                        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-600 max-h-32 overflow-y-auto">
-                                            <p className="font-semibold text-gray-800 mb-2">PHILIPPINE BASKETBALL LEAGUE - WAIVER AND RELEASE OF LIABILITY</p>
+                                        <div className="mt-2 p-3 bg-[#0f0f1e] border border-[#16213e] rounded-md text-xs text-gray-400 max-h-32 overflow-y-auto">
+                                            <p className="font-semibold text-gray-300 mb-2">PHILIPPINE BASKETBALL LEAGUE - WAIVER AND RELEASE OF LIABILITY</p>
                                             <p className="mb-2">
                                                 <strong>ASSUMPTION OF RISK:</strong> I understand that basketball is a contact sport that involves physical exertion and carries inherent risks of injury, including but not limited to sprains, strains, fractures, concussions, and other serious injuries that may result in permanent disability or death.
                                             </p>
@@ -203,7 +212,7 @@ export default function Register() {
                                     </div>
                                 </div>
                                 {errors.waiver_accepted && (
-                                    <div className="text-sm text-red-600">{errors.waiver_accepted}</div>
+                                    <div className="text-sm text-red-400">{errors.waiver_accepted}</div>
                                 )}
                             </div>
 
@@ -211,7 +220,7 @@ export default function Register() {
                             <button
                                 type="submit"
                                 disabled={processing || !data.waiver_accepted}
-                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-orange-500 hover:from-blue-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {processing ? 'Creating Account...' : 'Join the League'}
                             </button>
@@ -220,7 +229,7 @@ export default function Register() {
                             <div className="text-center">
                                 <Link
                                     href={route('login')}
-                                    className="text-sm text-blue-600 hover:text-blue-800"
+                                    className="text-sm text-blue-400 hover:text-blue-300"
                                 >
                                     Already have an account? Sign in
                                 </Link>
@@ -228,33 +237,6 @@ export default function Register() {
                         </form>
                     </div>
                 </div>
-                
-                {/* Styles */}
-                <style jsx>{`
-                    .basketball-court-bg {
-                        background: linear-gradient(135deg, #f97316 0%, #ea580c 25%, #dc2626 50%, #b91c1c 75%, #991b1b 100%);
-                        background-size: 400% 400%;
-                        animation: gradientShift 15s ease infinite;
-                    }
-                    
-                    .basketball-card-shadow {
-                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
-                    }
-                    
-                    .basketball-bounce {
-                        animation: bounce 2s infinite;
-                    }
-                    
-                    @keyframes gradientShift {
-                        0%, 100% { background-position: 0% 50%; }
-                        50% { background-position: 100% 50%; }
-                    }
-                    
-                    @keyframes bounce {
-                        0%, 20%, 53%, 80%, 100% { transform: translateY(0); }
-                        40%, 43% { transform: translateY(-10px); }
-                    }
-                `}</style>
             </div>
         </>
     )

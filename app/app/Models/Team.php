@@ -29,10 +29,15 @@ class Team extends Model {
     }
 
     public function homeGames() {
-        return $this->hasMany(Game::class, 'home_team_id');
+        return $this->hasMany(Game::class, 'team_a_id');
     }
 
     public function awayGames() {
-        return $this->hasMany(Game::class, 'away_team_id');
+        return $this->hasMany(Game::class, 'team_b_id');
+    }
+
+    public function games() {
+        return Game::where('team_a_id', $this->id)
+                  ->orWhere('team_b_id', $this->id);
     }
 }

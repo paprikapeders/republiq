@@ -624,6 +624,37 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         }
     };
 
+    const completeGame = async () => {
+        if (!selectedGame) return;
+        
+        // Ask for confirmation
+        if (!confirm('Are you sure you want to mark this game as completed? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            // Save any unsaved changes first
+            if (hasUnsavedChanges) {
+                await saveAllChanges();
+            }
+            
+            // Complete the game
+            router.post(route('scoresheet.complete-game', selectedGame.id), {}, {
+                onSuccess: () => {
+                    alert('Game has been marked as completed!');
+                    router.get(route('scoresheet.index'));
+                },
+                onError: (errors) => {
+                    console.error('Error completing game:', errors);
+                    alert('Error completing game. Please try again.');
+                }
+            });
+        } catch (error) {
+            console.error('Error completing game:', error);
+            alert('Error completing game. Please try again.');
+        }
+    };
+
     const resetPlayerStats = (playerId) => {
         setLocalPlayerStats(prev => {
             const newStats = { ...prev };
@@ -1658,6 +1689,19 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                 }`}
                             >
                                 {isSaving ? 'Saving...' : '💾 Save Changes'}
+                            </button>
+                        )}
+                        {selectedGame && selectedGame.status !== 'completed' && ['referee', 'admin', 'committee'].includes(userRole) && (
+                            <button
+                                onClick={completeGame}
+                                disabled={isSaving}
+                                className={`px-4 py-2 rounded font-medium ${
+                                    isSaving 
+                                        ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                }`}
+                            >
+                                ✅ Complete Game
                             </button>
                         )}
                         <button 

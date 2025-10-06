@@ -14,6 +14,9 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
     const [editPlayerDialogOpen, setEditPlayerDialogOpen] = useState(false);
     const [selectedPlayerToEdit, setSelectedPlayerToEdit] = useState(null);
     const [createNewPlayer, setCreateNewPlayer] = useState(false);
+    const [selectedTeamDetail, setSelectedTeamDetail] = useState(null);
+    const [showTeamDetail, setShowTeamDetail] = useState(false);
+    const [teamSearchTerm, setTeamSearchTerm] = useState('');
 
     const createTeamForm = useForm({
         name: '',
@@ -67,6 +70,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
 
     const handleAddPlayer = (e) => {
         e.preventDefault();
+        addPlayerForm.setData('create_new', createNewPlayer);
         addPlayerForm.post(route('admin.teams.add-player'), {
             onSuccess: () => {
                 addPlayerForm.reset();
@@ -91,7 +95,18 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
     const handlePlayerAction = (playerId, action) => {
         router.post(route('teams.handle-player-request', playerId), {
             action: action,
+        }, {
+            onSuccess: () => {
+                // Refresh the page to show updated data
+            },
+            onError: (errors) => {
+                console.error('Error handling player action:', errors);
+            }
         });
+    };
+
+    const navigateToEditPlayer = (playerId) => {
+        router.visit(route('admin.teams.edit-player', playerId));
     };
 
     const copyTeamCode = async (code) => {
@@ -106,7 +121,17 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
 
     const openAddPlayerDialog = (team) => {
         setSelectedTeamForPlayer(team);
-        addPlayerForm.setData('team_id', team.id);
+        addPlayerForm.reset();
+        addPlayerForm.setData({
+            team_id: team.id,
+            user_id: '',
+            jersey_number: '',
+            position: '',
+            name: '',
+            email: '',
+            phone: '',
+            create_new: false,
+        });
         setCreateNewPlayer(false);
         setAddPlayerDialogOpen(true);
     };
@@ -139,6 +164,16 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
         setEditPlayerDialogOpen(true);
     };
 
+    const handleTeamClick = (team) => {
+        setSelectedTeamDetail(team);
+        setShowTeamDetail(true);
+    };
+
+    const closeTeamDetail = () => {
+        setShowTeamDetail(false);
+        setSelectedTeamDetail(null);
+    };
+
     // Filter users to show only players not already in the selected team
     const availableUsers = allUsers.filter(user => {
         if (user.role !== 'player') return false;
@@ -153,6 +188,14 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
 
     const pendingMembers = teamMembers.filter(member => member.status === 'pending');
     const approvedMembers = teamMembers.filter(member => member.status === 'approved');
+    
+    // Filter teams based on search term
+    const filteredTeams = teams.filter(team => 
+        team.name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
+        team.code.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
+        (team.coach?.name?.toLowerCase().includes(teamSearchTerm.toLowerCase())) ||
+        (team.leagues?.some(league => league.name.toLowerCase().includes(teamSearchTerm.toLowerCase())))
+    );
 
     return (
         <AuthenticatedLayout
@@ -224,16 +267,42 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                     {teams.length > 0 && (
                         <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                             <div className="p-6">
-                                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                    {userRole === 'admin' 
-                                        ? 'All Teams' 
-                                        : userRole === 'coach' 
-                                        ? 'Your Teams' 
-                                        : 'Your Team Memberships'
-                                    }
-                                </h3>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-lg font-medium text-gray-900">
+                                        {userRole === 'admin' 
+                                            ? 'All Teams' 
+                                            : userRole === 'coach' 
+                                            ? 'Your Teams' 
+                                            : 'Your Team Memberships'
+                                        }
+                                    </h3>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Search teams..."
+                                            value={teamSearchTerm}
+                                            onChange={(e) => setTeamSearchTerm(e.target.value)}
+                                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                        />
+                                        {teamSearchTerm && (
+                                            <button
+                                                onClick={() => setTeamSearchTerm('')}
+                                                className="p-2 text-gray-400 hover:text-gray-600"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                {teamSearchTerm && (
+                                    <div className="mb-4 text-sm text-gray-600">
+                                        {filteredTeams.length} team{filteredTeams.length !== 1 ? 's' : ''} found
+                                        {teamSearchTerm && ` for "${teamSearchTerm}"`}
+                                    </div>
+                                )}
+                                
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {teams.map((team) => {
+                                    {filteredTeams.map((team) => {
                                         const teamApprovedMembers = (userRole === 'coach' || userRole === 'admin')
                                             ? team.players?.filter(p => p.status === 'approved') || []
                                             : [];
@@ -242,7 +311,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                             : [];
                                             
                                         return (
-                                            <div key={team.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                            <div key={team.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer transform hover:scale-[1.02]" onClick={() => handleTeamClick(team)}>
                                                 <div className="flex items-center justify-between mb-3">
                                                     <h4 className="font-medium text-gray-900">{team.name}</h4>
                                                     <div className="flex items-center gap-2">
@@ -251,7 +320,10 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                                         </span>
                                                         {userRole === 'admin' && (
                                                             <button
-                                                                onClick={() => openAddPlayerDialog(team)}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    openAddPlayerDialog(team);
+                                                                }}
                                                                 className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                                                 title="Add Player"
                                                             >
@@ -264,7 +336,10 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                                 {(userRole === 'coach' || userRole === 'admin') && (
                                                     <>
                                                         <button
-                                                            onClick={() => copyTeamCode(team.code)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                copyTeamCode(team.code);
+                                                            }}
                                                             className="w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 py-2 px-3 rounded text-sm flex items-center justify-center gap-2 transition-colors mb-3"
                                                         >
                                                             {copied ? (
@@ -279,6 +354,9 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                                                 </>
                                                             )}
                                                         </button>
+                                                        <div className="text-xs text-gray-500 text-center mb-2">
+                                                            Click to view team details
+                                                        </div>
                                                         
                                                         <div className="text-sm text-gray-600 space-y-1">
                                                             <p>Members: {teamApprovedMembers.length}</p>
@@ -305,6 +383,19 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                         );
                                     })}
                                 </div>
+                                
+                                {filteredTeams.length === 0 && teamSearchTerm && (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                        <p>No teams found matching "{teamSearchTerm}"</p>
+                                        <button
+                                            onClick={() => setTeamSearchTerm('')}
+                                            className="mt-2 text-blue-600 hover:text-blue-700 text-sm"
+                                        >
+                                            Clear search
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -388,7 +479,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                                                 {userRole === 'admin' && (
                                                                     <div className="flex gap-1">
                                                                         <button
-                                                                            onClick={() => openEditPlayerDialog(player)}
+                                                                            onClick={() => navigateToEditPlayer(player.id)}
                                                                             className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                                                             title="Edit Player"
                                                                         >
@@ -621,6 +712,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                             name: '',
                                             email: '',
                                             phone: '',
+                                            create_new: false,
                                         });
                                     }}
                                     className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
@@ -638,6 +730,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                         addPlayerForm.setData({
                                             ...addPlayerForm.data,
                                             user_id: '',
+                                            create_new: true,
                                         });
                                     }}
                                     className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
@@ -967,6 +1060,194 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Team Detail Modal */}
+            {showTeamDetail && selectedTeamDetail && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-white border-b p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">{selectedTeamDetail.name}</h2>
+                                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                                        <span>Code: <span className="font-mono bg-gray-100 px-2 py-1 rounded">{selectedTeamDetail.code}</span></span>
+                                        {selectedTeamDetail.coach && (
+                                            <span>Coach: {selectedTeamDetail.coach.name}</span>
+                                        )}
+                                        {selectedTeamDetail.leagues && selectedTeamDetail.leagues.length > 0 && (
+                                            <span>League: {selectedTeamDetail.leagues.map(league => league.name).join(', ')}</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {userRole === 'admin' && (
+                                        <button
+                                            onClick={() => {
+                                                closeTeamDetail();
+                                                openAddPlayerDialog(selectedTeamDetail);
+                                            }}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                                        >
+                                            <UserPlus className="h-4 w-4" />
+                                            Add Player
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={closeTeamDetail}
+                                        className="text-gray-400 hover:text-gray-600 p-2"
+                                    >
+                                        <X className="h-6 w-6" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="p-6">
+                            {/* Team Statistics */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                                <div className="bg-blue-50 rounded-lg p-4 text-center">
+                                    <div className="text-2xl font-bold text-blue-600">
+                                        {selectedTeamDetail.players?.filter(p => p.status === 'approved').length || 0}
+                                    </div>
+                                    <div className="text-sm text-blue-800">Active Players</div>
+                                </div>
+                                <div className="bg-yellow-50 rounded-lg p-4 text-center">
+                                    <div className="text-2xl font-bold text-yellow-600">
+                                        {selectedTeamDetail.players?.filter(p => p.status === 'pending').length || 0}
+                                    </div>
+                                    <div className="text-sm text-yellow-800">Pending Approvals</div>
+                                </div>
+                                <div className="bg-green-50 rounded-lg p-4 text-center">
+                                    <div className="text-2xl font-bold text-green-600">
+                                        {selectedTeamDetail.leagues?.length || 0}
+                                    </div>
+                                    <div className="text-sm text-green-800">Leagues</div>
+                                </div>
+                            </div>
+
+                            {/* Players List */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Team Roster</h3>
+                                
+                                {selectedTeamDetail.players && selectedTeamDetail.players.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {selectedTeamDetail.players
+                                            .filter(p => p.status === 'approved')
+                                            .map((player) => (
+                                            <div key={player.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                                            <span className="text-blue-600 font-bold">
+                                                                {player.jersey_number || '#'}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-semibold text-gray-900">{player.user.name}</h4>
+                                                            <div className="text-sm text-gray-600 space-y-1">
+                                                                <p>{player.user.email}</p>
+                                                                {player.user.phone && <p>Phone: {player.user.phone}</p>}
+                                                                {player.position && <p>Position: {player.position}</p>}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {userRole === 'admin' && (
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    closeTeamDetail();
+                                                                    openEditPlayerDialog(player);
+                                                                }}
+                                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                title="Edit Player"
+                                                            >
+                                                                <Edit className="h-4 w-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    closeTeamDetail();
+                                                                    openRemovePlayerDialog(player);
+                                                                }}
+                                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                title="Remove Player"
+                                                            >
+                                                                <X className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        
+                                        {selectedTeamDetail.players.filter(p => p.status === 'pending').length > 0 && (
+                                            <>
+                                                <h4 className="text-md font-semibold text-gray-700 mt-6 mb-3">Pending Approvals</h4>
+                                                {selectedTeamDetail.players
+                                                    .filter(p => p.status === 'pending')
+                                                    .map((player) => (
+                                                    <div key={player.id} className="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                                                                    <span className="text-yellow-600 font-bold">?</span>
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="font-semibold text-gray-900">{player.user.name}</h4>
+                                                                    <div className="text-sm text-gray-600">
+                                                                        <p>{player.user.email}</p>
+                                                                        <p className="text-yellow-700 font-medium">Pending approval</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            {(userRole === 'admin' || (userRole === 'coach' && selectedTeamDetail.coach_id === auth.user.id)) && (
+                                                                <div className="flex gap-2">
+                                                                    <button
+                                                                        onClick={() => handlePlayerAction(player.id, 'approve')}
+                                                                        className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                                                                        title="Approve"
+                                                                    >
+                                                                        <Check className="h-4 w-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handlePlayerAction(player.id, 'reject')}
+                                                                        className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                                                                        title="Reject"
+                                                                    >
+                                                                        <X className="h-4 w-4" />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 text-gray-500">
+                                        <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                        <p>No players in this team yet.</p>
+                                        {userRole === 'admin' && (
+                                            <button
+                                                onClick={() => {
+                                                    closeTeamDetail();
+                                                    openAddPlayerDialog(selectedTeamDetail);
+                                                }}
+                                                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-flex items-center gap-2 transition-colors"
+                                            >
+                                                <UserPlus className="h-4 w-4" />
+                                                Add First Player
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

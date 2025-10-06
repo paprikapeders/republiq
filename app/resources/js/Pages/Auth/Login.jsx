@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Head, useForm, Link } from '@inertiajs/react'
-import { Trophy, Shield, Target, Users, Zap } from 'lucide-react'
+import { Trophy, Shield, Target, Users, Zap, ArrowLeft } from 'lucide-react'
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -20,17 +20,26 @@ export default function Login({ status, canResetPassword }) {
         <>
             <Head title="Login" />
             
-            <div className="min-h-screen basketball-court-bg flex items-center justify-center p-4">
-                <div className="w-full max-w-md mx-auto basketball-card-shadow border-2 border-orange-200 bg-white/95 backdrop-blur-sm rounded-lg overflow-hidden">
+            <div className="min-h-screen bg-[#0f0f1e] flex items-center justify-center p-4">
+                {/* Back to Home Button */}
+                <Link
+                    href="/"
+                    className="absolute top-6 left-6 text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Home
+                </Link>
+
+                <div className="w-full max-w-md mx-auto bg-[#1a1a2e] border border-[#16213e] rounded-lg overflow-hidden shadow-2xl">
                     {/* Header */}
-                    <div className="text-center bg-gradient-to-r from-orange-500 to-red-500 text-white p-6">
+                    <div className="text-center bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6">
                         <div className="flex items-center justify-center gap-3 mb-2">
-                            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/30">
-                                <Trophy className="h-7 w-7 text-white basketball-bounce" />
+                            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                <Trophy className="h-7 w-7 text-white" />
                             </div>
                             <div className="text-left">
                                 <h1 className="text-white text-xl font-semibold">Welcome Back</h1>
-                                <p className="text-orange-100 text-sm">Republiq Basketball League</p>
+                                <p className="text-orange-100 text-sm">Philippine Basketball League</p>
                             </div>
                         </div>
                     </div>
@@ -38,48 +47,48 @@ export default function Login({ status, canResetPassword }) {
                     {/* Content */}
                     <div className="p-6">
                         {status && (
-                            <div className="mb-4 text-sm font-medium text-green-600">
+                            <div className="mb-4 text-sm font-medium text-green-400">
                                 {status}
                             </div>
                         )}
                         
                         {/* Demo Credentials */}
-                        <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-blue-50 rounded-lg border border-orange-200">
-                            <h4 className="text-sm font-semibold text-orange-900 mb-3 flex items-center gap-2">
+                        <div className="mb-6 p-4 bg-[#0f0f1e] rounded-lg border border-[#16213e]">
+                            <h4 className="text-sm font-semibold text-orange-500 mb-3 flex items-center gap-2">
                                 <Shield className="h-4 w-4" />
                                 Demo Login Credentials:
                             </h4>
                             <div className="grid grid-cols-2 gap-3 text-xs">
                                 <div className="space-y-2">
-                                    <div className="flex items-center gap-2 text-red-700">
+                                    <div className="flex items-center gap-2 text-red-400">
                                         <Shield className="h-3 w-3" />
                                         <span><strong>Admin:</strong> admin@pbl.com</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-blue-700">
+                                    <div className="flex items-center gap-2 text-blue-400">
                                         <Target className="h-3 w-3" />
                                         <span><strong>Coach:</strong> coach@pbl.com</span>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <div className="flex items-center gap-2 text-orange-700">
+                                    <div className="flex items-center gap-2 text-green-400">
                                         <Users className="h-3 w-3" />
                                         <span><strong>Player:</strong> player@pbl.com</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-yellow-700">
+                                    <div className="flex items-center gap-2 text-yellow-400">
                                         <Zap className="h-3 w-3" />
                                         <span><strong>Referee:</strong> referee@pbl.com</span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="mt-3 pt-2 border-t border-orange-200">
-                                <span className="text-xs font-medium text-orange-800">Password: demo123</span>
+                            <div className="mt-3 pt-2 border-t border-[#16213e]">
+                                <span className="text-xs font-medium text-orange-400">Password: demo123</span>
                             </div>
                         </div>
 
                         <form onSubmit={submit} className="space-y-4">
                             {/* Email */}
                             <div className="space-y-2">
-                                <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                                <label htmlFor="email" className="text-sm font-medium text-gray-300">
                                     Email
                                 </label>
                                 <input
@@ -87,20 +96,20 @@ export default function Login({ status, canResetPassword }) {
                                     type="email"
                                     name="email"
                                     value={data.email}
-                                    className="w-full px-3 py-2 border border-orange-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     autoComplete="username"
                                     placeholder="Enter your email"
                                     onChange={(e) => setData('email', e.target.value)}
                                     required
                                 />
                                 {errors.email && (
-                                    <div className="text-sm text-red-600">{errors.email}</div>
+                                    <div className="text-sm text-red-400">{errors.email}</div>
                                 )}
                             </div>
 
                             {/* Password */}
                             <div className="space-y-2">
-                                <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                                <label htmlFor="password" className="text-sm font-medium text-gray-300">
                                     Password
                                 </label>
                                 <input
@@ -108,14 +117,14 @@ export default function Login({ status, canResetPassword }) {
                                     type="password"
                                     name="password"
                                     value={data.password}
-                                    className="w-full px-3 py-2 border border-orange-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     autoComplete="current-password"
                                     placeholder="Enter your password"
                                     onChange={(e) => setData('password', e.target.value)}
                                     required
                                 />
                                 {errors.password && (
-                                    <div className="text-sm text-red-600">{errors.password}</div>
+                                    <div className="text-sm text-red-400">{errors.password}</div>
                                 )}
                             </div>
 
@@ -127,9 +136,9 @@ export default function Login({ status, canResetPassword }) {
                                     name="remember"
                                     checked={data.remember}
                                     onChange={(e) => setData('remember', e.target.checked)}
-                                    className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                    className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-[#16213e] bg-[#0f0f1e] rounded"
                                 />
-                                <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
+                                <label htmlFor="remember" className="ml-2 block text-sm text-gray-300">
                                     Remember me
                                 </label>
                             </div>
@@ -147,7 +156,7 @@ export default function Login({ status, canResetPassword }) {
                             <div className="text-center space-y-2">
                                 <Link
                                     href={route('register')}
-                                    className="text-sm text-orange-600 hover:text-orange-800"
+                                    className="text-sm text-orange-400 hover:text-orange-300"
                                 >
                                     Don't have an account? Sign up
                                 </Link>
@@ -155,7 +164,7 @@ export default function Login({ status, canResetPassword }) {
                                     <div>
                                         <Link
                                             href={route('password.request')}
-                                            className="text-sm text-gray-600 hover:text-gray-800"
+                                            className="text-sm text-gray-400 hover:text-gray-300"
                                         >
                                             Forgot your password?
                                         </Link>
@@ -165,33 +174,6 @@ export default function Login({ status, canResetPassword }) {
                         </form>
                     </div>
                 </div>
-                
-                {/* Styles */}
-                <style jsx>{`
-                    .basketball-court-bg {
-                        background: linear-gradient(135deg, #f97316 0%, #ea580c 25%, #dc2626 50%, #b91c1c 75%, #991b1b 100%);
-                        background-size: 400% 400%;
-                        animation: gradientShift 15s ease infinite;
-                    }
-                    
-                    .basketball-card-shadow {
-                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
-                    }
-                    
-                    .basketball-bounce {
-                        animation: bounce 2s infinite;
-                    }
-                    
-                    @keyframes gradientShift {
-                        0%, 100% { background-position: 0% 50%; }
-                        50% { background-position: 100% 50%; }
-                    }
-                    
-                    @keyframes bounce {
-                        0%, 20%, 53%, 80%, 100% { transform: translateY(0); }
-                        40%, 43% { transform: translateY(-10px); }
-                    }
-                `}</style>
             </div>
         </>
     )

@@ -334,6 +334,24 @@ class TeamManagementController extends Controller
     }
 
     /**
+     * Show the edit player form (admin only).
+     */
+    public function editPlayer(Player $player)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'admin') {
+            return redirect()->back()->withErrors(['error' => 'Unauthorized action.']);
+        }
+        
+        $player->load(['user', 'team']);
+        
+        return Inertia::render('EditPlayer', [
+            'player' => $player,
+        ]);
+    }
+
+    /**
      * Update a player's details (admin only).
      */
     public function updatePlayer(Request $request, Player $player)
@@ -365,6 +383,6 @@ class TeamManagementController extends Controller
             'position' => $request->filled('position') ? $request->position : null,
         ]);
         
-        return redirect()->back()->with('success', 'Player details updated successfully!');
+        return redirect()->route('teams.index')->with('success', 'Player details updated successfully!');
     }
 }

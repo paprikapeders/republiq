@@ -441,4 +441,25 @@ class LiveScoresheetController extends Controller
             return redirect()->back()->withErrors(['error' => 'Error saving player stats: ' . $e->getMessage()]);
         }
     }
+
+    public function completeGame(Request $request, Game $game)
+    {
+        $user = Auth::user();
+        
+        if (!in_array($user->role, ['referee', 'admin', 'committee'])) {
+            return redirect()->back()->withErrors(['error' => 'Unauthorized access.']);
+        }
+
+        try {
+            // Update game status to completed
+            $game->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+
+            return redirect()->back()->with('success', 'Game marked as completed successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Error completing game: ' . $e->getMessage()]);
+        }
+    }
 }
