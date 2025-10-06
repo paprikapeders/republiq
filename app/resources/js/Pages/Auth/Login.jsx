@@ -53,7 +53,7 @@ export default function Login({ status, canResetPassword }) {
                         )}
                         
                         {/* Demo Credentials */}
-                        <div className="mb-6 p-4 bg-[#0f0f1e] rounded-lg border border-[#16213e]">
+                        {/* <div className="mb-6 p-4 bg-[#0f0f1e] rounded-lg border border-[#16213e]">
                             <h4 className="text-sm font-semibold text-orange-500 mb-3 flex items-center gap-2">
                                 <Shield className="h-4 w-4" />
                                 Demo Login Credentials:
@@ -83,7 +83,7 @@ export default function Login({ status, canResetPassword }) {
                             <div className="mt-3 pt-2 border-t border-[#16213e]">
                                 <span className="text-xs font-medium text-orange-400">Password: demo123</span>
                             </div>
-                        </div>
+                        </div> */}
 
                         <form onSubmit={submit} className="space-y-4">
                             {/* Email */}
