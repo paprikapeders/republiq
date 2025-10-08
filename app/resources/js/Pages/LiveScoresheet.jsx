@@ -247,6 +247,8 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
 
     const useTimeout = (team) => {
+        if (isSaving) return;
+        
         const timeoutField = team === 'a' ? 'team_a_timeouts' : 'team_b_timeouts';
         const currentTimeouts = gameState[timeoutField];
         
@@ -276,6 +278,8 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
     
     const undoTimeout = (team) => {
+        if (isSaving) return;
+        
         const timeoutField = team === 'a' ? 'team_a_timeouts' : 'team_b_timeouts';
         const actionKey = `team_${team}_timeout`;
         const timeoutActions = actionHistory[actionKey] || [];
@@ -396,7 +400,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
 
     const recordFieldGoal = (playerId, points, made) => {
-        if (!selectedGame) return;
+        if (!selectedGame || isSaving) return;
         
         setLocalPlayerStats(prev => {
             const currentStats = prev[playerId] || {
@@ -476,7 +480,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
 
     const updatePlayerStat = (playerId, statType, value) => {
-        if (!selectedGame) return;
+        if (!selectedGame || isSaving) return;
         
         setLocalPlayerStats(prev => {
             const currentStats = prev[playerId] || {
@@ -667,6 +671,8 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
 
     const undoLastAction = () => {
+        if (isSaving) return;
+        
         // Simple undo by refreshing from server data
         if (selectedGame?.player_stats && selectedGame.player_stats.length > 0) {
             const statsMap = {};
@@ -1016,6 +1022,8 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
 
     const undoPlayerAction = (playerId) => {
+        if (isSaving) return;
+        
         const playerActions = actionHistory[playerId] || [];
         if (playerActions.length === 0) {
             return; // No actions to undo
@@ -1203,10 +1211,15 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         }
     };
 
-    const QuickButton = ({ onClick, children, className = "", compact = false }) => (
+    const QuickButton = ({ onClick, children, className = "", compact = false, disabled = false }) => (
         <button
-            onClick={onClick}
-            className={`${compact ? 'h-6 w-8 text-xs' : 'h-7 w-9 text-xs'} p-0 font-medium border rounded hover:bg-gray-100 transition-colors flex items-center justify-center leading-none ${className}`}
+            onClick={disabled ? undefined : onClick}
+            disabled={disabled}
+            className={`${compact ? 'h-6 w-8 text-xs' : 'h-7 w-9 text-xs'} p-0 font-medium border rounded transition-colors flex items-center justify-center leading-none ${
+                disabled 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                    : `hover:bg-gray-100 ${className}`
+            }`}
         >
             {children}
         </button>
@@ -1245,6 +1258,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => recordFieldGoal(playerId, 2, true)}
                             className="bg-green-100 hover:bg-green-200 border-green-300 text-green-800"
                             compact
+                            disabled={isSaving}
                         >
                             2✓
                         </QuickButton>
@@ -1252,6 +1266,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => recordFieldGoal(playerId, 2, false)}
                             className="bg-red-100 hover:bg-red-200 border-red-300 text-red-800"
                             compact
+                            disabled={isSaving}
                         >
                             2✗
                         </QuickButton>
@@ -1263,6 +1278,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => recordFieldGoal(playerId, 3, true)}
                             className="bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-800"
                             compact
+                            disabled={isSaving}
                         >
                             3✓
                         </QuickButton>
@@ -1270,6 +1286,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => recordFieldGoal(playerId, 3, false)}
                             className="bg-red-100 hover:bg-red-200 border-red-300 text-red-800"
                             compact
+                            disabled={isSaving}
                         >
                             3✗
                         </QuickButton>
@@ -1281,6 +1298,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => recordFieldGoal(playerId, 1, true)}
                             className="bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-800"
                             compact
+                            disabled={isSaving}
                         >
                             FT✓
                         </QuickButton>
@@ -1288,6 +1306,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => recordFieldGoal(playerId, 1, false)}
                             className="bg-red-100 hover:bg-red-200 border-red-300 text-red-800"
                             compact
+                            disabled={isSaving}
                         >
                             FT✗
                         </QuickButton>
@@ -1299,6 +1318,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => updatePlayerStat(playerId, 'assists', 1)}
                             className="bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800 text-xs"
                             compact
+                            disabled={isSaving}
                         >
                             A+
                         </QuickButton>
@@ -1306,6 +1326,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => updatePlayerStat(playerId, 'rebounds', 1)}
                             className="bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-800 text-xs"
                             compact
+                            disabled={isSaving}
                         >
                             R+
                         </QuickButton>
@@ -1313,6 +1334,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => updatePlayerStat(playerId, 'steals', 1)}
                             className="bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-800 text-xs"
                             compact
+                            disabled={isSaving}
                         >
                             S+
                         </QuickButton>
@@ -1320,6 +1342,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => updatePlayerStat(playerId, 'blocks', 1)}
                             className="bg-green-100 hover:bg-green-200 border-green-300 text-green-800 text-xs"
                             compact
+                            disabled={isSaving}
                         >
                             B+
                         </QuickButton>
@@ -1327,6 +1350,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             onClick={() => updatePlayerStat(playerId, 'fouls', 1)}
                             className="bg-red-100 hover:bg-red-200 border-red-300 text-red-800 text-xs"
                             compact
+                            disabled={isSaving}
                         >
                             F+
                         </QuickButton>
@@ -1336,15 +1360,17 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 <td className="px-1 py-1 text-center">
                     <button
                         onClick={() => undoPlayerAction(playerId)}
-                        disabled={!actionHistory[playerId] || actionHistory[playerId].length === 0}
+                        disabled={isSaving || !actionHistory[playerId] || actionHistory[playerId].length === 0}
                         className={`h-6 w-10 p-0 text-xs rounded transition-colors flex items-center justify-center ${
-                            actionHistory[playerId] && actionHistory[playerId].length > 0
+                            !isSaving && actionHistory[playerId] && actionHistory[playerId].length > 0
                                 ? 'bg-red-100 hover:bg-red-200 border border-red-300 text-red-700'
                                 : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
                         }`}
-                        title={actionHistory[playerId] && actionHistory[playerId].length > 0 
-                            ? `Undo last action (${actionHistory[playerId].length} actions)` 
-                            : 'No actions to undo'
+                        title={isSaving 
+                            ? 'Cannot undo while saving...' 
+                            : actionHistory[playerId] && actionHistory[playerId].length > 0 
+                                ? `Undo last action (${actionHistory[playerId].length} actions)` 
+                                : 'No actions to undo'
                         }
                     >
                         <Undo2 className="h-3 w-3" />
@@ -1708,19 +1734,6 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        {hasUnsavedChanges && (
-                            <button
-                                onClick={saveAllChanges}
-                                disabled={isSaving}
-                                className={`px-4 py-2 rounded font-medium ${
-                                    isSaving 
-                                        ? 'bg-gray-400 text-white cursor-not-allowed' 
-                                        : 'bg-green-600 hover:bg-green-700 text-white'
-                                }`}
-                            >
-                                {isSaving ? 'Saving...' : '💾 Save Changes'}
-                            </button>
-                        )}
                         {selectedGame && selectedGame.status !== 'completed' && ['referee', 'admin', 'committee'].includes(userRole) && (
                             <button
                                 onClick={completeGame}
@@ -1830,14 +1843,14 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                     <div className="flex gap-0.5">
                                         <button
                                             onClick={() => useTimeout('a')}
-                                            disabled={gameState.team_a_timeouts <= 0}
+                                            disabled={isSaving || gameState.team_a_timeouts <= 0}
                                             className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-1 py-0.5 rounded text-xs"
                                         >
                                             A-TO({gameState.team_a_timeouts})
                                         </button>
                                         <button
                                             onClick={() => undoTimeout('a')}
-                                            disabled={!actionHistory[`team_a_timeout`] || actionHistory[`team_a_timeout`].length === 0 || gameState.team_a_timeouts >= (gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter)}
+                                            disabled={isSaving || !actionHistory[`team_a_timeout`] || actionHistory[`team_a_timeout`].length === 0 || gameState.team_a_timeouts >= (gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter)}
                                             className="bg-blue-400 hover:bg-blue-500 disabled:bg-gray-300 text-white px-1 py-0.5 rounded text-xs"
                                             title="Undo timeout"
                                         >
@@ -1847,14 +1860,14 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                     <div className="flex gap-0.5">
                                         <button
                                             onClick={() => useTimeout('b')}
-                                            disabled={gameState.team_b_timeouts <= 0}
+                                            disabled={isSaving || gameState.team_b_timeouts <= 0}
                                             className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-1 py-0.5 rounded text-xs"
                                         >
                                             B-TO({gameState.team_b_timeouts})
                                         </button>
                                         <button
                                             onClick={() => undoTimeout('b')}
-                                            disabled={!actionHistory[`team_b_timeout`] || actionHistory[`team_b_timeout`].length === 0 || gameState.team_b_timeouts >= (gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter)}
+                                            disabled={isSaving || !actionHistory[`team_b_timeout`] || actionHistory[`team_b_timeout`].length === 0 || gameState.team_b_timeouts >= (gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter)}
                                             className="bg-green-400 hover:bg-green-500 disabled:bg-gray-300 text-white px-1 py-0.5 rounded text-xs"
                                             title="Undo timeout"
                                         >
@@ -1863,13 +1876,23 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                     </div>
                                     <button
                                         onClick={() => openActivePlayersModal(selectedGame.team_a_id)}
-                                        className="bg-blue-500 hover:bg-blue-600 text-white px-1 py-0.5 rounded text-xs"
+                                        disabled={isSaving}
+                                        className={`px-1 py-0.5 rounded text-xs ${
+                                            isSaving 
+                                                ? 'bg-gray-400 text-white cursor-not-allowed'
+                                                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                        }`}
                                     >
                                         Sub-A
                                     </button>
                                     <button
                                         onClick={() => openActivePlayersModal(selectedGame.team_b_id)}
-                                        className="bg-green-500 hover:bg-green-600 text-white px-1 py-0.5 rounded text-xs"
+                                        disabled={isSaving}
+                                        className={`px-1 py-0.5 rounded text-xs ${
+                                            isSaving 
+                                                ? 'bg-gray-400 text-white cursor-not-allowed'
+                                                : 'bg-green-500 hover:bg-green-600 text-white'
+                                        }`}
                                     >
                                         Sub-B
                                     </button>
@@ -1900,7 +1923,12 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                 <div className="flex gap-1">
                                     <button
                                         onClick={undoLastAction}
-                                        className="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs"
+                                        disabled={isSaving}
+                                        className={`px-2 py-1 rounded text-xs ${
+                                            isSaving 
+                                                ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                                : 'bg-gray-500 hover:bg-gray-600 text-white'
+                                        }`}
                                     >
                                         <Undo2 className="h-3 w-3 inline mr-1" />
                                         Revert All
