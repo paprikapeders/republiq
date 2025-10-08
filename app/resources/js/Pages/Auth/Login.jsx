@@ -39,7 +39,7 @@ export default function Login({ status, canResetPassword }) {
                             </div>
                             <div className="text-left">
                                 <h1 className="text-white text-xl font-semibold">Welcome Back</h1>
-                                <p className="text-orange-100 text-sm">Philippine Basketball League</p>
+                                <p className="text-orange-100 text-sm">Queens Ballers Republiq</p>
                             </div>
                         </div>
                     </div>
@@ -62,21 +62,21 @@ export default function Login({ status, canResetPassword }) {
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 text-red-400">
                                         <Shield className="h-3 w-3" />
-                                        <span><strong>Admin:</strong> admin@pbl.com</span>
+                                        <span><strong>Admin:</strong> admin@qbr.com</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-blue-400">
                                         <Target className="h-3 w-3" />
-                                        <span><strong>Coach:</strong> coach@pbl.com</span>
+                                        <span><strong>Coach:</strong> coach@qbr.com</span>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 text-green-400">
                                         <Users className="h-3 w-3" />
-                                        <span><strong>Player:</strong> player@pbl.com</span>
+                                        <span><strong>Player:</strong> player@qbr.com</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-yellow-400">
                                         <Zap className="h-3 w-3" />
-                                        <span><strong>Referee:</strong> referee@pbl.com</span>
+                                        <span><strong>Referee:</strong> referee@qbr.com</span>
                                     </div>
                                 </div>
                             </div>

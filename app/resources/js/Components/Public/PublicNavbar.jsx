@@ -16,8 +16,8 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                             <Trophy className="h-7 w-7 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-white">Philippine Basketball League</h1>
-                            <p className="text-xs text-gray-400">2024 Season</p>
+                            <h1 className="text-xl font-bold text-white">Queens Ballers Republiq</h1>
+                            <p className="text-xs text-gray-400">Queens Basketball League</p>
                         </div>
                     </div>
 

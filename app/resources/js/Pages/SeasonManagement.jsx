@@ -190,7 +190,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                             <h2 className="text-xl font-semibold leading-tight text-gray-800">
                                 Season Management
                             </h2>
-                            <p className="text-sm text-gray-600">Manage basketball league seasons and tournaments</p>
+                            <p className="text-sm text-gray-600">Manage Queens Ballers Republiq seasons and tournaments</p>
                         </div>
                     </div>
                     <button

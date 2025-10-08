@@ -16,7 +16,7 @@ class BasketballLeagueSeeder extends Seeder
      */
     public function run()
     {
-        $this->command->info('🏀 Setting up Basketball League Database...');
+        $this->command->info('🏀 Setting up Queens Ballers Republiq Database...');
         
         // Clear existing data (except admin user)
         $this->command->info('Clearing existing data...');
@@ -55,7 +55,7 @@ class BasketballLeagueSeeder extends Seeder
         $this->command->info('Creating games...');
         $this->call(GameSeeder::class);
         
-        $this->command->info('🎯 Basketball League setup complete!');
+        $this->command->info('🎯 Queens Ballers Republiq setup complete!');
         $this->command->info('');
         $this->command->info('📊 Summary:');
         $this->command->info('Leagues: ' . League::count());

@@ -1,4 +1,4 @@
-# Philippine Basketball League Management System - Functionality List
+# Queens Ballers Republiq Management System - Functionality List
 
 ## 🔐 **Authentication & User Management**
 
@@ -81,7 +81,7 @@
 ## 🏅 **League & Season Management**
 
 ### League Management
-41. **Create Leagues** - Admin can create basketball leagues
+41. **Create Leagues** - Admin can create Queens Ballers Republiq leagues
 42. **League Settings** - Manage league configurations
 43. **Team-League Associations** - Assign teams to specific leagues
 44. **Active League Filtering** - Show only active league content
@@ -216,4 +216,4 @@
 
 ---
 
-*This system provides a comprehensive basketball league management solution with role-based access, live scoring capabilities, team management workflows, and public-facing statistics display.*
+*This system provides a comprehensive Queens Ballers Republiq management solution with role-based access, live scoring capabilities, team management workflows, and public-facing statistics display.*

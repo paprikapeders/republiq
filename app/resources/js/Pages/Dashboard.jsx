@@ -110,8 +110,8 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                     <Trophy className="h-8 w-8 text-orange-600" />
                                 </div>
                                 <div>
-                                    <h3 className="text-2xl font-bold text-gray-900">Welcome to PBL!</h3>
-                                    <p className="text-gray-600">Republiq Basketball League Management System</p>
+                                    <h3 className="text-2xl font-bold text-gray-900">Welcome to Queens Ballers Republiq!</h3>
+                                    <p className="text-gray-600">Queens Ballers Republiq Management System</p>
                                 </div>
                             </div>
                             

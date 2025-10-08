@@ -1429,7 +1429,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                             <div className="p-6">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-medium text-gray-900">League & Game Management</h3>
+                                    <h3 className="text-lg font-medium text-gray-900">Queens Ballers Republiq - Game Management</h3>
                                     {(userRole === 'admin' || userRole === 'referee' || userRole === 'committee') && (
                                         <button
                                             onClick={() => setShowCreateMatchup(true)}
