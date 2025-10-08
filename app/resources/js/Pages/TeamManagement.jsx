@@ -9,6 +9,8 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
     const [joinDialogOpen, setJoinDialogOpen] = useState(false);
     const [addPlayerDialogOpen, setAddPlayerDialogOpen] = useState(false);
     const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState(null);
+    const [isEditingPlayer, setIsEditingPlayer] = useState(false);
+    const [editingPlayerId, setEditingPlayerId] = useState(null);
     const [removePlayerDialogOpen, setRemovePlayerDialogOpen] = useState(false);
     const [selectedPlayerToRemove, setSelectedPlayerToRemove] = useState(null);
     const [editPlayerDialogOpen, setEditPlayerDialogOpen] = useState(false);
@@ -71,14 +73,37 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
     const handleAddPlayer = (e) => {
         e.preventDefault();
         addPlayerForm.setData('create_new', createNewPlayer);
-        addPlayerForm.post(route('admin.teams.add-player'), {
-            onSuccess: () => {
-                addPlayerForm.reset();
-                setAddPlayerDialogOpen(false);
-                setSelectedTeamForPlayer(null);
-                setCreateNewPlayer(false);
-            },
-        });
+        
+        if (isEditingPlayer && editingPlayerId) {
+            // Update existing player
+            console.log('Updating player:', editingPlayerId, addPlayerForm.data);
+            addPlayerForm.put(`/admin/teams/update-player/${editingPlayerId}`, {
+                onSuccess: () => {
+                    console.log('Player updated successfully');
+                    addPlayerForm.reset();
+                    setAddPlayerDialogOpen(false);
+                    setSelectedTeamForPlayer(null);
+                    setCreateNewPlayer(false);
+                    setIsEditingPlayer(false);
+                    setEditingPlayerId(null);
+                },
+                onError: (errors) => {
+                    console.error('Update failed:', errors);
+                }
+            });
+        } else {
+            // Add new player
+            addPlayerForm.post('/admin/teams/add-player', {
+                onSuccess: () => {
+                    addPlayerForm.reset();
+                    setAddPlayerDialogOpen(false);
+                    setSelectedTeamForPlayer(null);
+                    setCreateNewPlayer(false);
+                    setIsEditingPlayer(false);
+                    setEditingPlayerId(null);
+                },
+            });
+        }
     };
 
     const handleRemovePlayer = () => {
@@ -93,14 +118,16 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
     };
 
     const handlePlayerAction = (playerId, action) => {
-        router.post(route('teams.handle-player-request', playerId), {
+        router.post(`/teams/player/${playerId}/handle`, {
             action: action,
         }, {
             onSuccess: () => {
                 // Refresh the page to show updated data
+                window.location.reload();
             },
             onError: (errors) => {
                 console.error('Error handling player action:', errors);
+                alert('Error processing request. Please try again.');
             }
         });
     };
@@ -119,20 +146,40 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
         }
     };
 
-    const openAddPlayerDialog = (team) => {
+    const openAddPlayerDialog = (team, existingPlayer = null) => {
         setSelectedTeamForPlayer(team);
+        setIsEditingPlayer(!!existingPlayer);
+        setEditingPlayerId(existingPlayer?.id || null);
+        
         addPlayerForm.reset();
-        addPlayerForm.setData({
-            team_id: team.id,
-            user_id: '',
-            jersey_number: '',
-            position: '',
-            name: '',
-            email: '',
-            phone: '',
-            create_new: false,
-        });
-        setCreateNewPlayer(false);
+        
+        if (existingPlayer) {
+            // Pre-load existing player data for editing
+            addPlayerForm.setData({
+                team_id: team.id,
+                user_id: existingPlayer.user_id,
+                jersey_number: existingPlayer.jersey_number || '',
+                position: existingPlayer.position || '',
+                name: existingPlayer.user?.name || '',
+                email: existingPlayer.user?.email || '',
+                phone: existingPlayer.user?.phone || '',
+                create_new: false,
+            });
+            setCreateNewPlayer(false);
+        } else {
+            // Reset form for new player
+            addPlayerForm.setData({
+                team_id: team.id,
+                user_id: '',
+                jersey_number: '',
+                position: '',
+                name: '',
+                email: '',
+                phone: '',
+                create_new: false,
+            });
+            setCreateNewPlayer(false);
+        }
         setAddPlayerDialogOpen(true);
     };
 
@@ -311,9 +358,14 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                             : [];
                                             
                                         return (
-                                            <div key={team.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer transform hover:scale-[1.02]" onClick={() => handleTeamClick(team)}>
+                                            <div key={team.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all">
                                                 <div className="flex items-center justify-between mb-3">
-                                                    <h4 className="font-medium text-gray-900">{team.name}</h4>
+                                                    <h4 
+                                                        className="font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors flex-1"
+                                                        onClick={() => handleTeamClick(team)}
+                                                    >
+                                                        {team.name}
+                                                    </h4>
                                                     <div className="flex items-center gap-2">
                                                         <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2 py-1 rounded">
                                                             {team.code}
@@ -354,9 +406,16 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                                                 </>
                                                             )}
                                                         </button>
-                                                        <div className="text-xs text-gray-500 text-center mb-2">
-                                                            Click to view team details
-                                                        </div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleTeamClick(team);
+                                                            }}
+                                                            className="w-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 py-2 px-3 rounded text-sm flex items-center justify-center gap-2 transition-colors mb-2"
+                                                        >
+                                                            <Settings className="h-4 w-4" />
+                                                            View Team Details
+                                                        </button>
                                                         
                                                         <div className="text-sm text-gray-600 space-y-1">
                                                             <p>Members: {teamApprovedMembers.length}</p>
@@ -694,14 +753,20 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
             {addPlayerDialogOpen && userRole === 'admin' && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Add Player to Team</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">
+                            {isEditingPlayer ? 'Edit Player' : 'Add Player to Team'}
+                        </h3>
                         <p className="text-sm text-gray-600 mb-4">
-                            Add a player to {selectedTeamForPlayer?.name}
+                            {isEditingPlayer 
+                                ? `Edit player details for ${selectedTeamForPlayer?.name}`
+                                : `Add a player to ${selectedTeamForPlayer?.name}`
+                            }
                         </p>
                         
-                        {/* Toggle between existing and new player */}
-                        <div className="mb-4">
-                            <div className="flex bg-gray-100 rounded-lg p-1">
+                        {/* Toggle between existing and new player - only show when adding new player */}
+                        {!isEditingPlayer && (
+                            <div className="mb-4">
+                                <div className="flex bg-gray-100 rounded-lg p-1">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -741,12 +806,13 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                 >
                                     Create New Player
                                 </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
                         
                         <form onSubmit={handleAddPlayer}>
-                            {!createNewPlayer ? (
-                                // Existing Player Selection
+                            {!createNewPlayer && !isEditingPlayer ? (
+                                // Existing Player Selection (only when adding, not editing)
                                 <div className="mb-4">
                                     <label htmlFor="player" className="block text-sm font-medium text-gray-700 mb-2">
                                         Select Player
@@ -756,7 +822,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                         value={addPlayerForm.data.user_id}
                                         onChange={e => addPlayerForm.setData('user_id', e.target.value)}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        required={!createNewPlayer}
+                                        required={!createNewPlayer && !isEditingPlayer}
                                     >
                                         <option value="">Select a player</option>
                                         {availableUsers.map((user) => (
@@ -769,6 +835,59 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                         <p className="text-red-600 text-xs mt-1">{addPlayerForm.errors.user_id}</p>
                                     )}
                                 </div>
+                            ) : isEditingPlayer ? (
+                                // Edit Player Fields
+                                <>
+                                    <div className="mb-4">
+                                        <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-2">
+                                            Player Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="edit-name"
+                                            value={addPlayerForm.data.name}
+                                            onChange={e => addPlayerForm.setData('name', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required
+                                        />
+                                        {addPlayerForm.errors.name && (
+                                            <p className="text-red-600 text-xs mt-1">{addPlayerForm.errors.name}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label htmlFor="edit-email" className="block text-sm font-medium text-gray-700 mb-2">
+                                            Email
+                                        </label>
+                                        <input
+                                            type="email"
+                                            id="edit-email"
+                                            value={addPlayerForm.data.email}
+                                            onChange={e => addPlayerForm.setData('email', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required
+                                        />
+                                        {addPlayerForm.errors.email && (
+                                            <p className="text-red-600 text-xs mt-1">{addPlayerForm.errors.email}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label htmlFor="edit-phone" className="block text-sm font-medium text-gray-700 mb-2">
+                                            Phone (Optional)
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            id="edit-phone"
+                                            value={addPlayerForm.data.phone}
+                                            onChange={e => addPlayerForm.setData('phone', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                        {addPlayerForm.errors.phone && (
+                                            <p className="text-red-600 text-xs mt-1">{addPlayerForm.errors.phone}</p>
+                                        )}
+                                    </div>
+                                </>
                             ) : (
                                 // New Player Creation Fields
                                 <>
@@ -881,6 +1000,8 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                         setAddPlayerDialogOpen(false);
                                         setSelectedTeamForPlayer(null);
                                         setCreateNewPlayer(false);
+                                        setIsEditingPlayer(false);
+                                        setEditingPlayerId(null);
                                         addPlayerForm.reset();
                                     }}
                                     className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors"
@@ -892,7 +1013,13 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                     disabled={addPlayerForm.processing}
                                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                                 >
-                                    {addPlayerForm.processing ? 'Adding...' : (createNewPlayer ? 'Create & Add Player' : 'Add Player')}
+                                    {addPlayerForm.processing 
+                                        ? (isEditingPlayer ? 'Updating...' : 'Adding...') 
+                                        : (isEditingPlayer 
+                                            ? 'Update Player' 
+                                            : (createNewPlayer ? 'Create & Add Player' : 'Add Player')
+                                        )
+                                    }
                                 </button>
                             </div>
                         </form>
@@ -1160,7 +1287,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                                             <button
                                                                 onClick={() => {
                                                                     closeTeamDetail();
-                                                                    openEditPlayerDialog(player);
+                                                                    openAddPlayerDialog(selectedTeamDetail, player);
                                                                 }}
                                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                                 title="Edit Player"

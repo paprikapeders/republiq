@@ -3,12 +3,6 @@ import { Head, Link } from '@inertiajs/react';
 import { ChevronLeft, Calendar, MapPin, Trophy, Users, Clock } from 'lucide-react';
 
 export default function GameDetail({ game }) {
-    // Debug logging
-    console.log('Game data:', game);
-    console.log('Team A:', game.teamA || game.team_a);
-    console.log('Team B:', game.teamB || game.team_b);
-    console.log('Player Stats:', game.playerStats || game.player_stats);
-    console.log('Game keys:', Object.keys(game));
     
     const formatDateTime = (dateString) => {
         const date = new Date(dateString);
@@ -34,62 +28,78 @@ export default function GameDetail({ game }) {
     const teamB = game.teamB || game.team_b;
     const playerStats = game.playerStats || game.player_stats || [];
 
-    // Organize player stats by team
+    // Organize player stats by team with improved matching logic
     const homeTeamStats = playerStats.filter(stat => {
-        if (!teamA?.players || !stat.player) return false;
-        // Try matching by player ID first, then by user ID
-        return teamA.players.some(player => 
-            player.id === stat.player_id || 
-            player.user?.id === stat.player?.user?.id ||
-            player.id === stat.player?.id
-        );
+        if (!teamA?.players || !stat) return false;
+        // Try multiple matching strategies for better accuracy
+        return teamA.players.some(player => {
+            // Match by player_id directly
+            if (stat.player_id && player.id && stat.player_id === player.id) return true;
+            // Match by user_id if available
+            if (stat.player_id && player.user_id && stat.player_id === player.user_id) return true;
+            // Match by nested player object
+            if (stat.player?.id && player.id && stat.player.id === player.id) return true;
+            // Match by nested user object
+            if (stat.player?.user?.id && player.user?.id && stat.player.user.id === player.user.id) return true;
+            return false;
+        });
     }) || [];
     
     const awayTeamStats = playerStats.filter(stat => {
-        if (!teamB?.players || !stat.player) return false;
-        // Try matching by player ID first, then by user ID
-        return teamB.players.some(player => 
-            player.id === stat.player_id || 
-            player.user?.id === stat.player?.user?.id ||
-            player.id === stat.player?.id
-        );
+        if (!teamB?.players || !stat) return false;
+        // Try multiple matching strategies for better accuracy
+        return teamB.players.some(player => {
+            // Match by player_id directly
+            if (stat.player_id && player.id && stat.player_id === player.id) return true;
+            // Match by user_id if available
+            if (stat.player_id && player.user_id && stat.player_id === player.user_id) return true;
+            // Match by nested player object
+            if (stat.player?.id && player.id && stat.player.id === player.id) return true;
+            // Match by nested user object
+            if (stat.player?.user?.id && player.user?.id && stat.player.user.id === player.user.id) return true;
+            return false;
+        });
     }) || [];
 
     // Calculate team totals
+    // Helper function to safely calculate team totals from player stats
     const calculateTeamTotals = (teamStats) => {
-        return teamStats.reduce((totals, stat) => ({
-            points: totals.points + (parseInt(stat.points) || 0),
-            field_goals_made: totals.field_goals_made + (parseInt(stat.field_goals_made) || 0),
-            field_goals_attempted: totals.field_goals_attempted + (parseInt(stat.field_goals_attempted) || 0),
-            three_pointers_made: totals.three_pointers_made + (parseInt(stat.three_pointers_made) || 0),
-            three_pointers_attempted: totals.three_pointers_attempted + (parseInt(stat.three_pointers_attempted) || 0),
-            free_throws_made: totals.free_throws_made + (parseInt(stat.free_throws_made) || 0),
-            free_throws_attempted: totals.free_throws_attempted + (parseInt(stat.free_throws_attempted) || 0),
-            rebounds: totals.rebounds + (parseInt(stat.rebounds) || 0),
-            assists: totals.assists + (parseInt(stat.assists) || 0),
-            steals: totals.steals + (parseInt(stat.steals) || 0),
-            blocks: totals.blocks + (parseInt(stat.blocks) || 0),
-            fouls: totals.fouls + (parseInt(stat.fouls) || 0),
-        }), {
+        const totals = {
             points: 0,
-            field_goals_made: 0,
-            field_goals_attempted: 0,
-            three_pointers_made: 0,
-            three_pointers_attempted: 0,
-            free_throws_made: 0,
-            free_throws_attempted: 0,
+            threePointers: 0,
+            twoPointers: 0,
+            freeThrows: 0,
             rebounds: 0,
             assists: 0,
-            steals: 0,
-            blocks: 0,
-            fouls: 0,
-        });
-    };
+            fouls: 0
+        };
 
-    const homeTeamTotals = calculateTeamTotals(homeTeamStats);
+        teamStats.forEach(player => {
+            if (player && player.stats) {
+                const playerPoints = parseInt(player.stats.points) || 0;
+                const threePointers = parseInt(player.stats.three_pointers) || 0;
+                const twoPointers = parseInt(player.stats.two_pointers) || 0;
+                const freeThrows = parseInt(player.stats.free_throws) || 0;
+                
+                // Calculate total points from individual stat types if main points is 0
+                const calculatedPoints = playerPoints > 0 ? playerPoints : (threePointers * 3) + (twoPointers * 2) + freeThrows;
+                
+                totals.points += calculatedPoints;
+                totals.threePointers += threePointers;
+                totals.twoPointers += twoPointers;
+                totals.freeThrows += freeThrows;
+                totals.rebounds += parseInt(player.stats.rebounds) || 0;
+                totals.assists += parseInt(player.stats.assists) || 0;
+                totals.fouls += parseInt(player.stats.fouls) || 0;
+                
+            }
+        });
+
+        return totals;
+    };    const homeTeamTotals = calculateTeamTotals(homeTeamStats);
     const awayTeamTotals = calculateTeamTotals(awayTeamStats);
     
-    // Use saved game scores if player stats don't have points or if they're zero
+    // Use calculated player stats if available, otherwise use saved game scores
     const homeScore = homeTeamTotals.points > 0 ? homeTeamTotals.points : (game.team_a_score || 0);
     const awayScore = awayTeamTotals.points > 0 ? awayTeamTotals.points : (game.team_b_score || 0);
 
@@ -187,71 +197,37 @@ export default function GameDetail({ game }) {
         );
     };
 
-    const TeamTotalsCard = ({ totals, teamName, teamColor }) => (
-        <div className="bg-[#1a1a2e] rounded-lg p-4 border border-[#16213e]">
-            <h4 className="text-lg font-bold text-white mb-3">{teamName} Team Totals</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+    const TeamTotalsCard = ({ title, totals }) => (
+        <div className="bg-[#1a1a2e] rounded-lg p-6 border border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 text-white">{title}</h3>
+            <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-400">{totals.points}</div>
-                    <div className="text-gray-400">Points</div>
+                    <div className="text-2xl font-bold text-orange-400">{totals.points || 0}</div>
+                    <div className="text-sm text-gray-400">Points</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-lg text-white">
-                        {totals.field_goals_made}/{totals.field_goals_attempted}
-                    </div>
-                    <div className="text-gray-400">Field Goals</div>
-                    <div className="text-xs text-gray-500">
-                        {totals.field_goals_attempted > 0 ? 
-                            `(${((totals.field_goals_made / totals.field_goals_attempted) * 100).toFixed(1)}%)` : 
-                            '(0.0%)'
-                        }
-                    </div>
+                    <div className="text-2xl font-bold text-white">{totals.rebounds || 0}</div>
+                    <div className="text-sm text-gray-400">Rebounds</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-lg text-white">
-                        {totals.three_pointers_made}/{totals.three_pointers_attempted}
-                    </div>
-                    <div className="text-gray-400">3-Pointers</div>
-                    <div className="text-xs text-gray-500">
-                        {totals.three_pointers_attempted > 0 ? 
-                            `(${((totals.three_pointers_made / totals.three_pointers_attempted) * 100).toFixed(1)}%)` : 
-                            '(0.0%)'
-                        }
-                    </div>
+                    <div className="text-2xl font-bold text-white">{totals.assists || 0}</div>
+                    <div className="text-sm text-gray-400">Assists</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-lg text-white">
-                        {totals.free_throws_made}/{totals.free_throws_attempted}
-                    </div>
-                    <div className="text-gray-400">Free Throws</div>
-                    <div className="text-xs text-gray-500">
-                        {totals.free_throws_attempted > 0 ? 
-                            `(${((totals.free_throws_made / totals.free_throws_attempted) * 100).toFixed(1)}%)` : 
-                            '(0.0%)'
-                        }
-                    </div>
+                    <div className="text-2xl font-bold text-white">{totals.fouls || 0}</div>
+                    <div className="text-sm text-gray-400">Fouls</div>
                 </div>
-                <div className="text-center">
-                    <div className="text-lg text-white">{totals.rebounds}</div>
-                    <div className="text-gray-400">Rebounds</div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-700">
+                <div className="text-sm text-gray-400">
+                    3PT: {totals.threePointers || 0} | 2PT: {totals.twoPointers || 0} | FT: {totals.freeThrows || 0}
                 </div>
-                <div className="text-center">
-                    <div className="text-lg text-white">{totals.assists}</div>
-                    <div className="text-gray-400">Assists</div>
-                </div>
-                <div className="text-center">
-                    <div className="text-lg text-white">{totals.steals}</div>
-                    <div className="text-gray-400">Steals</div>
-                </div>
-                <div className="text-center">
-                    <div className="text-lg text-white">{totals.blocks}</div>
-                    <div className="text-gray-400">Blocks</div>
+                <div className="text-xs text-gray-500 mt-2">
+                    Calculated from player stats: {(totals.threePointers || 0) * 3 + (totals.twoPointers || 0) * 2 + (totals.freeThrows || 0)} points
                 </div>
             </div>
         </div>
-    );
-
-    return (
+    );    return (
         <div className="min-h-screen bg-[#0f0f1e] text-white">
             <Head title={`${teamA?.name || 'Team A'} vs ${teamB?.name || 'Team B'} - Game Detail`} />
             

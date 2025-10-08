@@ -8,6 +8,9 @@ use App\Models\User;
 use App\Models\PlayerStat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class LiveScoresheetController extends Controller
@@ -459,6 +462,53 @@ class LiveScoresheetController extends Controller
             return redirect()->back()->with('success', 'Game marked as completed successfully!');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Error completing game: ' . $e->getMessage()]);
+        }
+    }
+    
+    public function resetGameStats(Request $request, Game $game)
+    {
+        $user = Auth::user();
+        
+        // Only referees, admins, and committee can reset game stats
+        if (!in_array($user->role, ['referee', 'admin', 'committee'])) {
+            return response()->json(['error' => 'Unauthorized access.'], 403);
+        }
+
+        try {
+            DB::transaction(function () use ($game) {
+                // Delete all player stats for this game
+                PlayerStat::where('game_id', $game->id)->delete();
+                
+                // Reset game scores and state to defaults
+                $game->update([
+                    'team_a_score' => 0,
+                    'team_b_score' => 0,
+                    'team_a_fouls' => 0,
+                    'team_b_fouls' => 0,
+                    'team_a_timeouts' => 2, // Default timeouts
+                    'team_b_timeouts' => 2,
+                    'quarter' => 1,
+                    'time_remaining' => 12 * 60, // 12 minutes in seconds
+                    'is_running' => false,
+                    'status' => 'scheduled', // Reset to scheduled status
+                    'completed_at' => null,
+                ]);
+                
+                // Reset active players if the table exists
+                if (Schema::hasTable('active_players')) {
+                    DB::table('active_players')->where('game_id', $game->id)->delete();
+                }
+                
+                // Reset substitutions if the table exists
+                if (Schema::hasTable('substitutions')) {
+                    DB::table('substitutions')->where('game_id', $game->id)->delete();
+                }
+            });
+
+            return redirect()->back()->with('success', 'Game stats reset successfully! The game has been reset to its initial state.');
+        } catch (\Exception $e) {
+            Log::error('Error resetting game stats: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Error resetting game stats: ' . $e->getMessage()]);
         }
     }
 }

@@ -65,6 +65,8 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         date: '',
         venue: ''
     });
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
 
     // Initialize local stats and active players from server data
     useEffect(() => {
@@ -1172,6 +1174,34 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         const seasons = [...new Set(leagues.map(league => league.year))].sort((a, b) => b - a);
         return seasons;
     };
+    
+    // Reset stats function
+    const resetGameStats = async () => {
+        if (!selectedGame) return;
+        
+        setIsResetting(true);
+        try {
+            router.post(`/games/${selectedGame.id}/reset-stats`, {}, {
+                preserveState: false,
+                preserveScroll: false,
+                onSuccess: (page) => {
+                    setShowResetConfirm(false);
+                    // Redirect back to the scoresheet with the same game selected
+                    router.get(`/scoresheet/${selectedGame.id}`);
+                },
+                onError: (errors) => {
+                    console.error('Reset failed:', errors);
+                    setIsResetting(false);
+                    const errorMessage = errors.error || 'Failed to reset game stats. Please try again.';
+                    alert(errorMessage);
+                }
+            });
+        } catch (error) {
+            console.error('Reset error:', error);
+            setIsResetting(false);
+            alert('Failed to reset game stats. Please try again.');
+        }
+    };
 
     const QuickButton = ({ onClick, children, className = "", compact = false }) => (
         <button
@@ -1702,6 +1732,20 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                 }`}
                             >
                                 ✅ Complete Game
+                            </button>
+                        )}
+                        {selectedGame && ['referee', 'admin', 'committee'].includes(userRole) && (
+                            <button
+                                onClick={() => setShowResetConfirm(true)}
+                                disabled={isResetting || isSaving}
+                                className={`px-4 py-2 rounded font-medium inline-flex items-center gap-2 ${
+                                    isResetting || isSaving
+                                        ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                        : 'bg-red-600 hover:bg-red-700 text-white'
+                                }`}
+                            >
+                                <RotateCcw className={`h-4 w-4 ${isResetting ? 'animate-spin' : ''}`} />
+                                {isResetting ? 'Resetting...' : 'Reset Stats'}
                             </button>
                         )}
                         <button 
@@ -2655,6 +2699,42 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                 className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded font-medium"
                             >
                                 Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* Reset Confirmation Dialog */}
+            {showResetConfirm && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 border max-w-md w-full mx-4">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">Reset Game Stats</h3>
+                        <p className="text-gray-700 mb-6">
+                            Are you sure you want to reset all stats for this game? This will:
+                        </p>
+                        <ul className="text-sm text-gray-600 mb-6 space-y-1">
+                            <li>• Delete all player statistics</li>
+                            <li>• Reset team scores to 0</li>
+                            <li>• Reset fouls and timeouts to default</li>
+                            <li>• Reset game time and quarter</li>
+                            <li>• Reset game status to scheduled</li>
+                            <li>• This action cannot be undone</li>
+                        </ul>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowResetConfirm(false)}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                                disabled={isResetting}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={resetGameStats}
+                                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+                                disabled={isResetting}
+                            >
+                                {isResetting ? 'Resetting...' : 'Reset Stats'}
                             </button>
                         </div>
                     </div>

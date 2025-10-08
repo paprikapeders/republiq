@@ -74,6 +74,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/scoresheet/{game}/stat', [LiveScoresheetController::class, 'recordPlayerStat'])->name('scoresheet.record-stat');
     Route::post('/scoresheet/{game}/save-player-stats', [LiveScoresheetController::class, 'savePlayerStats'])->name('scoresheet.save-player-stats');
     Route::post('/scoresheet/{game}/complete', [LiveScoresheetController::class, 'completeGame'])->name('scoresheet.complete-game');
+    Route::post('/games/{game}/reset-stats', [LiveScoresheetController::class, 'resetGameStats'])->name('games.reset-stats');
     
     // Team-League Management Routes (Admin Only)
     Route::get('/team-leagues', [TeamLeagueController::class, 'index'])->name('team-leagues.index');

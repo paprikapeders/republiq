@@ -171,10 +171,17 @@ class TeamManagementController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user is the coach of the team
-        if ($user->role !== 'coach' || $player->team->coach_id !== $user->id) {
+        // Check if user is admin or the coach of the team
+        if (!in_array($user->role, ['admin', 'coach'])) {
             return redirect()->back()->withErrors(['error' => 'Unauthorized action.']);
         }
+        
+        // If user is coach, they can only manage their own team
+        if ($user->role === 'coach' && $player->team->coach_id !== $user->id) {
+            return redirect()->back()->withErrors(['error' => 'You can only manage players from your own teams.']);
+        }
+        
+        // Admin can manage any team
         
         $request->validate([
             'action' => 'required|in:approve,reject',
