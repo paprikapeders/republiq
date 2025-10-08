@@ -13,7 +13,7 @@ export default function Home({ auth, games, teams, seasons }) {
 
     return (
         <>
-            <Head title="Philippine Basketball League" />
+            <Head title="Queens Ballers Republiq" />
             <div className="min-h-screen bg-[#0f0f1e]">
                 <PublicNavbar 
                     currentPage={currentPage}

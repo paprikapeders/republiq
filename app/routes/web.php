@@ -91,6 +91,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/season-management/{season}/update-status', [SeasonManagementController::class, 'updateStatus'])->name('season-management.update-status');
     Route::post('/season-management/{season}/add-team', [SeasonManagementController::class, 'addTeam'])->name('season-management.add-team');
     Route::post('/season-management/{season}/remove-team', [SeasonManagementController::class, 'removeTeam'])->name('season-management.remove-team');
+    Route::post('/season-management/{season}/update-mvp-settings', [SeasonManagementController::class, 'updateMvpSettings'])->name('season-management.update-mvp-settings');
 });
 
 require __DIR__.'/auth.php';

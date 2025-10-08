@@ -2,7 +2,7 @@ import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { ChevronLeft, Calendar, MapPin, Trophy, Users, Clock } from 'lucide-react';
 
-export default function GameDetail({ game }) {
+export default function GameDetail({ game, mvpSettings }) {
     
     const formatDateTime = (dateString) => {
         const date = new Date(dateString);
@@ -27,7 +27,7 @@ export default function GameDetail({ game }) {
     const teamA = game.teamA || game.team_a;
     const teamB = game.teamB || game.team_b;
     const playerStats = game.playerStats || game.player_stats || [];
-
+    
     // Organize player stats by team with improved matching logic
     const homeTeamStats = playerStats.filter(stat => {
         if (!teamA?.players || !stat) return false;
@@ -74,34 +74,136 @@ export default function GameDetail({ game }) {
             fouls: 0
         };
 
-        teamStats.forEach(player => {
-            if (player && player.stats) {
-                const playerPoints = parseInt(player.stats.points) || 0;
-                const threePointers = parseInt(player.stats.three_pointers) || 0;
-                const twoPointers = parseInt(player.stats.two_pointers) || 0;
-                const freeThrows = parseInt(player.stats.free_throws) || 0;
+        teamStats.forEach(stat => {
+            if (stat) {
+                // The stat object contains the player stats directly
+                const playerPoints = parseInt(stat.points) || 0;
+                const threePointersMade = parseInt(stat.three_pointers_made) || 0;
+                const fieldGoalsMade = parseInt(stat.field_goals_made) || 0;
+                const threePointersAttempted = parseInt(stat.three_pointers_attempted) || 0;
+                const freeThrowsMade = parseInt(stat.free_throws_made) || 0;
+                
+                // Calculate two pointers (field goals minus three pointers)
+                const twoPointersMade = Math.max(0, fieldGoalsMade - threePointersMade);
                 
                 // Calculate total points from individual stat types if main points is 0
-                const calculatedPoints = playerPoints > 0 ? playerPoints : (threePointers * 3) + (twoPointers * 2) + freeThrows;
+                const calculatedPoints = playerPoints > 0 ? playerPoints : (threePointersMade * 3) + (twoPointersMade * 2) + freeThrowsMade;
                 
                 totals.points += calculatedPoints;
-                totals.threePointers += threePointers;
-                totals.twoPointers += twoPointers;
-                totals.freeThrows += freeThrows;
-                totals.rebounds += parseInt(player.stats.rebounds) || 0;
-                totals.assists += parseInt(player.stats.assists) || 0;
-                totals.fouls += parseInt(player.stats.fouls) || 0;
-                
+                totals.threePointers += threePointersMade;
+                totals.twoPointers += twoPointersMade;
+                totals.freeThrows += freeThrowsMade;
+                totals.rebounds += parseInt(stat.rebounds) || 0;
+                totals.assists += parseInt(stat.assists) || 0;
+                totals.fouls += parseInt(stat.fouls) || 0;
             }
         });
 
         return totals;
-    };    const homeTeamTotals = calculateTeamTotals(homeTeamStats);
+    };
+    
+    const homeTeamTotals = calculateTeamTotals(homeTeamStats);
     const awayTeamTotals = calculateTeamTotals(awayTeamStats);
     
     // Use calculated player stats if available, otherwise use saved game scores
-    const homeScore = homeTeamTotals.points > 0 ? homeTeamTotals.points : (game.team_a_score || 0);
-    const awayScore = awayTeamTotals.points > 0 ? awayTeamTotals.points : (game.team_b_score || 0);
+    // Prioritize game scores if they exist, fallback to calculated totals
+    const homeScore = (game.team_a_score && game.team_a_score > 0) ? game.team_a_score : homeTeamTotals.points;
+    const awayScore = (game.team_b_score && game.team_b_score > 0) ? game.team_b_score : awayTeamTotals.points;
+
+    // Calculate MVP based on a comprehensive performance rating
+    const calculateMVP = () => {
+        if (!playerStats || playerStats.length === 0) return null;
+
+        let mvpCandidate = null;
+        let highestRating = -1;
+
+        playerStats.forEach(stat => {
+            // Find the player info for this stat
+            let playerInfo = null;
+            let teamName = '';
+            
+            // Check Team A players
+            if (teamA?.players) {
+                const player = teamA.players.find(p => 
+                    (stat.player_id && p.id && stat.player_id === p.id) ||
+                    (stat.player_id && p.user_id && stat.player_id === p.user_id) ||
+                    (stat.player?.id && p.id && stat.player.id === p.id) ||
+                    (stat.player?.user?.id && p.user?.id && stat.player.user.id === p.user.id)
+                );
+                if (player) {
+                    playerInfo = player;
+                    teamName = teamA.name;
+                }
+            }
+            
+            // Check Team B players if not found in Team A
+            if (!playerInfo && teamB?.players) {
+                const player = teamB.players.find(p => 
+                    (stat.player_id && p.id && stat.player_id === p.id) ||
+                    (stat.player_id && p.user_id && stat.player_id === p.user_id) ||
+                    (stat.player?.id && p.id && stat.player.id === p.id) ||
+                    (stat.player?.user?.id && p.user?.id && stat.player.user.id === p.user.id)
+                );
+                if (player) {
+                    playerInfo = player;
+                    teamName = teamB.name;
+                }
+            }
+
+            if (playerInfo) {
+                // Calculate performance rating (higher is better)
+                const points = parseInt(stat.points) || 0;
+                const rebounds = parseInt(stat.rebounds) || 0;
+                const assists = parseInt(stat.assists) || 0;
+                const steals = parseInt(stat.steals) || 0;
+                const blocks = parseInt(stat.blocks) || 0;
+                const fouls = parseInt(stat.fouls) || 0;
+                const turnovers = parseInt(stat.turnovers) || 0;
+                
+                // Calculate shooting efficiency
+                const fgMade = parseInt(stat.field_goals_made) || 0;
+                const fgAttempted = parseInt(stat.field_goals_attempted) || 0;
+                const fgPercentage = fgAttempted > 0 ? (fgMade / fgAttempted) : 0;
+                
+                // MVP Rating Formula: Weighted sum using configurable settings
+                const settings = mvpSettings || {
+                    points_weight: 1.0,
+                    rebounds_weight: 1.2,
+                    assists_weight: 1.5,
+                    steals_weight: 2.0,
+                    blocks_weight: 2.0,
+                    shooting_efficiency_weight: 10.0,
+                    fouls_penalty: 0.5,
+                    turnovers_penalty: 1.0,
+                };
+                
+                const rating = (
+                    points * settings.points_weight +
+                    rebounds * settings.rebounds_weight +
+                    assists * settings.assists_weight +
+                    steals * settings.steals_weight +
+                    blocks * settings.blocks_weight +
+                    (fgPercentage * settings.shooting_efficiency_weight) -
+                    fouls * settings.fouls_penalty -
+                    turnovers * settings.turnovers_penalty
+                );
+
+                if (rating > highestRating) {
+                    highestRating = rating;
+                    mvpCandidate = {
+                        player: playerInfo,
+                        stats: stat,
+                        team: teamName,
+                        rating: rating.toFixed(1)
+                    };
+                }
+            }
+        });
+
+        return mvpCandidate;
+    };
+
+    const mvp = calculateMVP();
 
     const PlayerStatsTable = ({ teamStats, teamName, teamColor, teamPlayers = [] }) => {
         // Show all team players, not just those with stats
@@ -148,13 +250,23 @@ export default function GameDetail({ game }) {
                                 const ftPercentage = stat.free_throws_attempted > 0 ? 
                                     ((stat.free_throws_made / stat.free_throws_attempted) * 100).toFixed(1) : '0.0';
 
+                                // Check if this player is the MVP
+                                const isMvp = mvp && (
+                                    (mvp.player.id === player.id) ||
+                                    (mvp.player.user?.id === player.user?.id)
+                                );
+
                                 return (
-                                    <tr key={index} className="border-b border-[#16213e]/50 hover:bg-[#0f0f1e] transition-colors">
-                                        <td className="py-3 px-2 text-orange-400 font-bold">
+                                    <tr key={index} className={`border-b border-[#16213e]/50 hover:bg-[#0f0f1e] transition-colors ${
+                                        isMvp ? 'bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30' : ''
+                                    }`}>
+                                        <td className={`py-3 px-2 font-bold ${isMvp ? 'text-yellow-400' : 'text-orange-400'}`}>
                                             {player?.jersey_number || player?.number || '--'}
+                                            {isMvp && <Trophy className="h-4 w-4 inline ml-1 text-yellow-400" />}
                                         </td>
-                                        <td className="py-3 px-2 text-white font-medium">
+                                        <td className={`py-3 px-2 font-medium ${isMvp ? 'text-yellow-100' : 'text-white'}`}>
                                             {player?.user?.name || player?.name || 'Unknown Player'}
+                                            {isMvp && <span className="text-xs ml-2 bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">MVP</span>}
                                         </td>
                                         <td className="py-3 px-2 text-center text-orange-400 font-bold">
                                             {stat.points || 0}
@@ -336,6 +448,60 @@ export default function GameDetail({ game }) {
                         teamColor="blue" 
                     />
                 </div>
+
+                {/* MVP Section */}
+                {mvp && isCompleted && (
+                    <div className="mb-8">
+                        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-lg p-6">
+                            <div className="flex items-center justify-center mb-4">
+                                <Trophy className="h-8 w-8 text-yellow-400 mr-3" />
+                                <h3 className="text-2xl font-bold text-yellow-400">GAME MVP</h3>
+                            </div>
+                            
+                            <div className="text-center">
+                                <div className="bg-[#1a1a2e] rounded-lg p-6 border border-yellow-500/20">
+                                    <div className="flex items-center justify-center gap-4 mb-4">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
+                                            <span className="text-2xl font-bold text-white">
+                                                {mvp.player?.jersey_number || mvp.player?.number || '#'}
+                                            </span>
+                                        </div>
+                                        <div className="text-left">
+                                            <h4 className="text-2xl font-bold text-white">
+                                                {mvp.player?.user?.name || mvp.player?.name}
+                                            </h4>
+                                            <p className="text-yellow-400 font-medium">{mvp.team}</p>
+                                            <p className="text-gray-400 text-sm">MVP Rating: {mvp.rating}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                        <div className="bg-[#0f0f1e] rounded-lg p-3">
+                                            <div className="text-2xl font-bold text-orange-400">{mvp.stats.points || 0}</div>
+                                            <div className="text-xs text-gray-400">Points</div>
+                                        </div>
+                                        <div className="bg-[#0f0f1e] rounded-lg p-3">
+                                            <div className="text-2xl font-bold text-blue-400">{mvp.stats.rebounds || 0}</div>
+                                            <div className="text-xs text-gray-400">Rebounds</div>
+                                        </div>
+                                        <div className="bg-[#0f0f1e] rounded-lg p-3">
+                                            <div className="text-2xl font-bold text-green-400">{mvp.stats.assists || 0}</div>
+                                            <div className="text-xs text-gray-400">Assists</div>
+                                        </div>
+                                        <div className="bg-[#0f0f1e] rounded-lg p-3">
+                                            <div className="text-2xl font-bold text-purple-400">
+                                                {(mvp.stats.field_goals_attempted > 0 ? 
+                                                    ((mvp.stats.field_goals_made / mvp.stats.field_goals_attempted) * 100).toFixed(1) : 
+                                                    '0.0')}%
+                                            </div>
+                                            <div className="text-xs text-gray-400">FG%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Player Statistics */}
                 <div className="space-y-8">

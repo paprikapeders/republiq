@@ -101,8 +101,23 @@ class PublicController extends Controller
             'playerStats.player.user'
         ]);
 
+        // Get MVP settings from the league, with default values if not set
+        $defaultMvpSettings = [
+            'points_weight' => 1.0,
+            'rebounds_weight' => 1.2,
+            'assists_weight' => 1.5,
+            'steals_weight' => 2.0,
+            'blocks_weight' => 2.0,
+            'shooting_efficiency_weight' => 10.0,
+            'fouls_penalty' => 0.5,
+            'turnovers_penalty' => 1.0,
+        ];
+        
+        $mvpSettings = $game->league->mvp_settings ? $game->league->mvp_settings : $defaultMvpSettings;
+
         return Inertia::render('Public/GameDetail', [
             'game' => $game,
+            'mvpSettings' => $mvpSettings,
         ]);
     }
 

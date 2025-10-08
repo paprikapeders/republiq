@@ -24,6 +24,13 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
         }
     }, [seasons, selectedSeason]);
 
+    // Load MVP settings when season changes
+    useEffect(() => {
+        if (currentSeason) {
+            loadMvpSettings(currentSeason);
+        }
+    }, [currentSeason]);
+
     const { data, setData, post, put, processing, errors, reset } = useForm({
         name: '',
         year: new Date().getFullYear(),
@@ -35,6 +42,19 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
 
     const teamForm = useForm({
         team_id: '',
+    });
+
+    // MVP Settings state and form
+    const [showMvpSettings, setShowMvpSettings] = useState(false);
+    const mvpSettingsForm = useForm({
+        points_weight: 1.0,
+        rebounds_weight: 1.2,
+        assists_weight: 1.5,
+        steals_weight: 2.0,
+        blocks_weight: 2.0,
+        shooting_efficiency_weight: 10.0,
+        fouls_penalty: 0.5,
+        turnovers_penalty: 1.0,
     });
 
     // Check if user is admin
@@ -142,6 +162,43 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
             year: 'numeric',
             month: 'long',
             day: 'numeric'
+        });
+    };
+
+    const handleMvpSettingsSubmit = (e) => {
+        e.preventDefault();
+        mvpSettingsForm.post(route('season-management.update-mvp-settings', selectedSeason), {
+            onSuccess: () => {
+                setShowMvpSettings(false);
+            }
+        });
+    };
+
+    const loadMvpSettings = (season) => {
+        if (season?.mvp_settings) {
+            mvpSettingsForm.setData({
+                points_weight: season.mvp_settings.points_weight || 1.0,
+                rebounds_weight: season.mvp_settings.rebounds_weight || 1.2,
+                assists_weight: season.mvp_settings.assists_weight || 1.5,
+                steals_weight: season.mvp_settings.steals_weight || 2.0,
+                blocks_weight: season.mvp_settings.blocks_weight || 2.0,
+                shooting_efficiency_weight: season.mvp_settings.shooting_efficiency_weight || 10.0,
+                fouls_penalty: season.mvp_settings.fouls_penalty || 0.5,
+                turnovers_penalty: season.mvp_settings.turnovers_penalty || 1.0,
+            });
+        }
+    };
+
+    const resetMvpSettingsToDefaults = () => {
+        mvpSettingsForm.setData({
+            points_weight: 1.0,
+            rebounds_weight: 1.2,
+            assists_weight: 1.5,
+            steals_weight: 2.0,
+            blocks_weight: 2.0,
+            shooting_efficiency_weight: 10.0,
+            fouls_penalty: 0.5,
+            turnovers_penalty: 1.0,
         });
     };
 
@@ -544,6 +601,233 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                             <p className="text-gray-600">No teams assigned to this season yet</p>
                                         </div>
                                     )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MVP Settings Section */}
+                    {selectedSeason && currentSeason && (
+                        <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                            <div className="p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 className="text-lg font-medium text-gray-900">MVP Calculation Settings</h3>
+                                        <p className="text-sm text-gray-600">
+                                            Configure weighted scoring for MVP calculations
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            These settings will be used for both game MVP and league MVP calculations
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={resetMvpSettingsToDefaults}
+                                            className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm"
+                                        >
+                                            Reset to Defaults
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                loadMvpSettings(currentSeason);
+                                                setShowMvpSettings(true);
+                                            }}
+                                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                        >
+                                            <Settings className="h-4 w-4" />
+                                            Configure MVP Settings
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Current MVP Settings Display */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    <div className="bg-gray-50 p-3 rounded-lg">
+                                        <p className="font-medium text-gray-700">Points Weight</p>
+                                        <p className="text-lg font-semibold text-purple-600">
+                                            {currentSeason?.mvp_settings?.points_weight || '1.0'}
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-50 p-3 rounded-lg">
+                                        <p className="font-medium text-gray-700">Rebounds Weight</p>
+                                        <p className="text-lg font-semibold text-purple-600">
+                                            {currentSeason?.mvp_settings?.rebounds_weight || '1.2'}
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-50 p-3 rounded-lg">
+                                        <p className="font-medium text-gray-700">Assists Weight</p>
+                                        <p className="text-lg font-semibold text-purple-600">
+                                            {currentSeason?.mvp_settings?.assists_weight || '1.5'}
+                                        </p>
+                                    </div>
+                                    <div className="bg-gray-50 p-3 rounded-lg">
+                                        <p className="font-medium text-gray-700">Steals Weight</p>
+                                        <p className="text-lg font-semibold text-purple-600">
+                                            {currentSeason?.mvp_settings?.steals_weight || '2.0'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MVP Settings Modal */}
+                    {showMvpSettings && (
+                        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                            <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+                                <div className="mt-3">
+                                    <h3 className="text-lg font-medium text-gray-900 mb-4">Configure MVP Calculation Weights</h3>
+                                    <p className="text-sm text-gray-600 mb-6">
+                                        Adjust the weights for different statistics in MVP calculations. Higher values give more importance to that statistic.
+                                    </p>
+                                    
+                                    <form onSubmit={handleMvpSettingsSubmit}>
+                                        <div className="grid grid-cols-2 gap-6 mb-6">
+                                            {/* Positive Stats */}
+                                            <div>
+                                                <h4 className="font-medium text-gray-900 mb-3">Positive Stats (Higher is Better)</h4>
+                                                
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Points Weight
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="0"
+                                                            value={mvpSettingsForm.data.points_weight}
+                                                            onChange={(e) => mvpSettingsForm.setData('points_weight', parseFloat(e.target.value))}
+                                                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Rebounds Weight
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="0"
+                                                            value={mvpSettingsForm.data.rebounds_weight}
+                                                            onChange={(e) => mvpSettingsForm.setData('rebounds_weight', parseFloat(e.target.value))}
+                                                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Assists Weight
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="0"
+                                                            value={mvpSettingsForm.data.assists_weight}
+                                                            onChange={(e) => mvpSettingsForm.setData('assists_weight', parseFloat(e.target.value))}
+                                                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Steals Weight
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="0"
+                                                            value={mvpSettingsForm.data.steals_weight}
+                                                            onChange={(e) => mvpSettingsForm.setData('steals_weight', parseFloat(e.target.value))}
+                                                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Blocks Weight
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="0"
+                                                            value={mvpSettingsForm.data.blocks_weight}
+                                                            onChange={(e) => mvpSettingsForm.setData('blocks_weight', parseFloat(e.target.value))}
+                                                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Shooting Efficiency Weight
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="0"
+                                                            value={mvpSettingsForm.data.shooting_efficiency_weight}
+                                                            onChange={(e) => mvpSettingsForm.setData('shooting_efficiency_weight', parseFloat(e.target.value))}
+                                                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Negative Stats */}
+                                            <div>
+                                                <h4 className="font-medium text-gray-900 mb-3">Penalties (Deducted from Score)</h4>
+                                                
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Fouls Penalty
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="0"
+                                                            value={mvpSettingsForm.data.fouls_penalty}
+                                                            onChange={(e) => mvpSettingsForm.setData('fouls_penalty', parseFloat(e.target.value))}
+                                                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Turnovers Penalty
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="0"
+                                                            value={mvpSettingsForm.data.turnovers_penalty}
+                                                            onChange={(e) => mvpSettingsForm.setData('turnovers_penalty', parseFloat(e.target.value))}
+                                                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-end gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowMvpSettings(false)}
+                                                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={mvpSettingsForm.processing}
+                                                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+                                            >
+                                                {mvpSettingsForm.processing ? 'Saving...' : 'Save Settings'}
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>

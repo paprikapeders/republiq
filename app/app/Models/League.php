@@ -18,6 +18,7 @@ class League extends Model
         'description',
         'status',
         'is_active',
+        'mvp_settings',
     ];
 
     protected $casts = [
@@ -25,6 +26,7 @@ class League extends Model
         'year' => 'integer',
         'start_date' => 'date',
         'end_date' => 'date',
+        'mvp_settings' => 'array',
     ];
 
     public function teams()

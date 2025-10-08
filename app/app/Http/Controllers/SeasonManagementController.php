@@ -202,4 +202,31 @@ class SeasonManagementController extends Controller
             'seasons' => League::orderBy('year', 'desc')->get(),
         ]);
     }
+
+    public function updateMvpSettings(Request $request, League $season)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'admin') {
+            return redirect()->back()->withErrors(['error' => 'Unauthorized access.']);
+        }
+
+        $validated = $request->validate([
+            'points_weight' => 'required|numeric|min:0',
+            'rebounds_weight' => 'required|numeric|min:0',
+            'assists_weight' => 'required|numeric|min:0',
+            'steals_weight' => 'required|numeric|min:0',
+            'blocks_weight' => 'required|numeric|min:0',
+            'shooting_efficiency_weight' => 'required|numeric|min:0',
+            'fouls_penalty' => 'required|numeric|min:0',
+            'turnovers_penalty' => 'required|numeric|min:0',
+        ]);
+
+        // Store MVP settings as JSON in the league record
+        $season->update([
+            'mvp_settings' => $validated
+        ]);
+
+        return redirect()->back()->with('success', 'MVP calculation settings updated successfully!');
+    }
 }
