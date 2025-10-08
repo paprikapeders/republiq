@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Game;
 use App\Models\Team;
 use App\Models\League;
+use App\Models\Player;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -196,6 +197,51 @@ class PublicController extends Controller
             'team' => $team,
             'games' => $games,
             'activeLeague' => $activeLeague,
+        ]);
+    }
+
+    public function leaderboards()
+    {
+        // Get active league
+        $activeLeague = League::where('status', 'active')
+            ->orWhere('is_active', true)
+            ->first();
+
+        if (!$activeLeague) {
+            return Inertia::render('Public/Leaderboards', [
+                'players' => [],
+                'mvpSettings' => null,
+            ]);
+        }
+
+        // Get all players with their stats for the active season
+        $players = Player::with([
+            'user',
+            'team',
+            'playerStats' => function ($query) use ($activeLeague) {
+                $query->whereHas('game', function ($q) use ($activeLeague) {
+                    $q->where('league_id', $activeLeague->id);
+                });
+            }
+        ])->get();
+
+        // Get MVP settings from the active league, with default values if not set
+        $defaultMvpSettings = [
+            'points_weight' => 1.0,
+            'rebounds_weight' => 1.2,
+            'assists_weight' => 1.5,
+            'steals_weight' => 2.0,
+            'blocks_weight' => 2.0,
+            'shooting_efficiency_weight' => 10.0,
+            'fouls_penalty' => 0.5,
+            'turnovers_penalty' => 1.0,
+        ];
+        
+        $mvpSettings = $activeLeague->mvp_settings ? $activeLeague->mvp_settings : $defaultMvpSettings;
+
+        return Inertia::render('Public/Leaderboards', [
+            'players' => $players,
+            'mvpSettings' => $mvpSettings,
         ]);
     }
 }

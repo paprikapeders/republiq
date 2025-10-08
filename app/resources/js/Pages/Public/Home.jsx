@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { PublicNavbar } from '@/Components/Public/PublicNavbar';
 import { PublicSchedules } from '@/Components/Public/PublicSchedules';
 import { PublicTeams } from '@/Components/Public/PublicTeams';
@@ -8,7 +8,11 @@ export default function Home({ auth, games, teams, seasons }) {
     const [currentPage, setCurrentPage] = useState('schedules');
 
     const handleNavigate = (page) => {
-        setCurrentPage(page);
+        if (page === 'leaderboards') {
+            router.visit('/leaderboards');
+        } else {
+            setCurrentPage(page);
+        }
     };
 
     return (

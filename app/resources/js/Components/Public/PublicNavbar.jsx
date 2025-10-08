@@ -43,6 +43,16 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                         >
                             Teams
                         </button>
+                        <button
+                            onClick={() => onNavigate('leaderboards')}
+                            className={`transition-colors ${
+                                currentPage === 'leaderboards'
+                                    ? 'text-orange-500'
+                                    : 'text-gray-300 hover:text-white'
+                            }`}
+                        >
+                            Leaderboards
+                        </button>
                         <Link
                             href={route('login')}
                             className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
