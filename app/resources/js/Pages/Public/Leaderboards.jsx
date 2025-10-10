@@ -44,6 +44,10 @@ export default function Leaderboards({ players, mvpSettings }) {
         // Validate inputs
         if (!gamesPlayed || gamesPlayed === 0) return 0;
 
+        // Calculate total attempts and makes for better shooting efficiency
+        let totalFgMade = 0;
+        let totalFgAttempted = 0;
+
         player.player_stats.forEach(stat => {
             const points = parseFloat(stat.points) || 0;
             const rebounds = parseFloat(stat.rebounds) || 0;
@@ -53,48 +57,67 @@ export default function Leaderboards({ players, mvpSettings }) {
             const fouls = parseFloat(stat.fouls) || 0;
             const turnovers = parseFloat(stat.turnovers) || 0;
             
-            // Calculate shooting efficiency with attempts as weight
+            // Accumulate shooting stats
             const fgMade = parseFloat(stat.field_goals_made) || 0;
             const fgAttempted = parseFloat(stat.field_goals_attempted) || 0;
-            let shootingContribution = 0;
-            
-            if (fgAttempted > 0 && !isNaN(fgMade) && !isNaN(fgAttempted)) {
-                const fgPercentage = fgMade / fgAttempted;
-                const shootingWeight = settings.shooting_efficiency_weight || 10.0;
-                // Weight shooting by attempts - more attempts with good percentage = higher impact
-                shootingContribution = fgPercentage * fgAttempted * shootingWeight;
-                // Validate the result
-                shootingContribution = isNaN(shootingContribution) ? 0 : shootingContribution;
-            }
+            totalFgMade += fgMade;
+            totalFgAttempted += fgAttempted;
             
             const gameRating = (
                 points * (settings.points_weight || 1.0) +
                 rebounds * (settings.rebounds_weight || 1.2) +
                 assists * (settings.assists_weight || 1.5) +
                 steals * (settings.steals_weight || 2.0) +
-                blocks * (settings.blocks_weight || 2.0) +
-                (shootingContribution || 0) -
+                blocks * (settings.blocks_weight || 2.0) -
                 fouls * (settings.fouls_penalty || 0.5) -
                 turnovers * (settings.turnovers_penalty || 1.0)
             );
             
-            // Ensure no NaN or negative ratings
+            // Ensure no NaN or negative base ratings
             const validGameRating = isNaN(gameRating) ? 0 : Math.max(0, gameRating);
             totalRating += validGameRating;
         });
 
+        // Calculate overall shooting efficiency bonus
+        let shootingBonus = 0;
+        if (totalFgAttempted > 0) {
+            const overallFgPercentage = totalFgMade / totalFgAttempted;
+            const shootingWeight = settings.shooting_efficiency_weight || 10.0;
+            // Reward consistent shooters with more attempts
+            const attemptWeight = Math.min(totalFgAttempted / (gamesPlayed * 10), 1.5); // Max 1.5x for high-volume shooters
+            shootingBonus = overallFgPercentage * shootingWeight * attemptWeight * gamesPlayed;
+        }
+
+        // Add shooting bonus to total rating
+        totalRating += shootingBonus;
+
         // Validate totalRating before proceeding
         if (isNaN(totalRating)) {
-            console.warn('Invalid totalRating detected, setting to 0', { player: player.id, totalRating });
             totalRating = 0;
         }
 
-        // Apply games played weight - more consistent players get higher ratings
+        // Enhanced games played weighting system
         const averageRating = gamesPlayed > 0 ? (totalRating / gamesPlayed) : 0;
-        const gamesPlayedWeight = Math.min(gamesPlayed / 8, 1.0); // Full weight at 8+ games
-        const minWeight = Math.max(0, Math.min(1, settings.games_played_weight || 0.5)); // Ensure valid range
         
-        const finalRating = averageRating * (minWeight + (1.0 - minWeight) * gamesPlayedWeight);
+        // Progressive games played multiplier (rewards consistency)
+        let gamesPlayedMultiplier = 1.0;
+        const minGames = 3; // Minimum games to avoid penalties
+        const optimalGames = 10; // Games for full weight
+        
+        if (gamesPlayed < minGames) {
+            // Significant penalty for very few games
+            gamesPlayedMultiplier = 0.3 + (gamesPlayed / minGames) * 0.2;
+        } else if (gamesPlayed < optimalGames) {
+            // Gradual increase from 50% to 100% weight
+            const progress = (gamesPlayed - minGames) / (optimalGames - minGames);
+            const minWeight = Math.max(0, Math.min(1, settings.games_played_weight || 0.5));
+            gamesPlayedMultiplier = minWeight + (1.0 - minWeight) * progress;
+        } else {
+            // Full weight for players with optimal games or more
+            gamesPlayedMultiplier = 1.0;
+        }
+        
+        const finalRating = averageRating * gamesPlayedMultiplier;
         
         // Ensure we never return NaN
         return isNaN(finalRating) ? 0 : finalRating;
@@ -153,6 +176,10 @@ export default function Leaderboards({ players, mvpSettings }) {
             field_goals_attempted: (totals.field_goals_attempted / gamesPlayed).toFixed(1),
             field_goal_percentage: totals.field_goals_attempted > 0 
                 ? ((totals.field_goals_made / totals.field_goals_attempted) * 100).toFixed(1)
+                : 0,
+            // Add weighted shooting efficiency that considers volume
+            shooting_efficiency: totals.field_goals_attempted > 0 
+                ? (((totals.field_goals_made / totals.field_goals_attempted) * Math.min(totals.field_goals_attempted / (gamesPlayed * 5), 2)) * 100).toFixed(1)
                 : 0
         };
 
@@ -168,14 +195,25 @@ export default function Leaderboards({ players, mvpSettings }) {
     const getLeaderboard = (category) => {
         const filtered = processedPlayers.filter(p => p.gamesPlayed > 0);
         
-        // Helper function to sort with games played as secondary factor
-        const sortWithGamesPlayed = (stat) => {
+        // Helper function to sort with games played weighting
+        const sortWithGamesPlayedWeight = (stat) => {
             return filtered.sort((a, b) => {
-                const statDiff = parseFloat(b.averages[stat]) - parseFloat(a.averages[stat]);
-                if (Math.abs(statDiff) < 0.1) { // If stats are very close, use games played
+                // Apply games played weight to create weighted stat
+                const minGames = 3;
+                const getGameWeight = (games) => {
+                    if (games < minGames) return 0.5; // Penalty for few games
+                    return Math.min(games / 8, 1.0); // Progressive weight up to 8 games
+                };
+                
+                const aWeighted = parseFloat(a.averages[stat]) * getGameWeight(a.gamesPlayed);
+                const bWeighted = parseFloat(b.averages[stat]) * getGameWeight(b.gamesPlayed);
+                
+                const weightedDiff = bWeighted - aWeighted;
+                if (Math.abs(weightedDiff) < 0.1) {
+                    // If weighted stats are close, favor player with more games
                     return b.gamesPlayed - a.gamesPlayed;
                 }
-                return statDiff;
+                return weightedDiff;
             });
         };
         
@@ -183,21 +221,22 @@ export default function Leaderboards({ players, mvpSettings }) {
             case 'overall':
                 return filtered.sort((a, b) => {
                     const mvpDiff = b.mvpRating - a.mvpRating;
-                    if (Math.abs(mvpDiff) < 0.1) { // Close MVP ratings, use games played
+                    if (Math.abs(mvpDiff) < 0.01) {
+                        // If MVP ratings are essentially identical, favor consistency (more games)
                         return b.gamesPlayed - a.gamesPlayed;
                     }
                     return mvpDiff;
                 });
             case 'points':
-                return sortWithGamesPlayed('points');
+                return sortWithGamesPlayedWeight('points');
             case 'rebounds':
-                return sortWithGamesPlayed('rebounds');
+                return sortWithGamesPlayedWeight('rebounds');
             case 'assists':
-                return sortWithGamesPlayed('assists');
+                return sortWithGamesPlayedWeight('assists');
             case 'steals':
-                return sortWithGamesPlayed('steals');
+                return sortWithGamesPlayedWeight('steals');
             case 'blocks':
-                return sortWithGamesPlayed('blocks');
+                return sortWithGamesPlayedWeight('blocks');
             case 'shooting':
                 // For shooting, require minimum attempts and games
                 return filtered
@@ -207,11 +246,18 @@ export default function Leaderboards({ players, mvpSettings }) {
                         return p.gamesPlayed >= 3 && totalAttempts >= 20; // Min 3 games and 20 total attempts
                     })
                     .sort((a, b) => {
-                        const fgDiff = parseFloat(b.averages.field_goal_percentage) - parseFloat(a.averages.field_goal_percentage);
-                        if (Math.abs(fgDiff) < 1.0) { // If percentages are close, use games played
-                            return b.gamesPlayed - a.gamesPlayed;
+                        // Use shooting efficiency that considers both percentage and volume
+                        const aEfficiency = parseFloat(a.averages.shooting_efficiency || a.averages.field_goal_percentage);
+                        const bEfficiency = parseFloat(b.averages.shooting_efficiency || b.averages.field_goal_percentage);
+                        
+                        const efficiencyDiff = bEfficiency - aEfficiency;
+                        if (Math.abs(efficiencyDiff) < 2) {
+                            // If efficiency is close, favor player with more games and attempts
+                            const aVolume = parseFloat(a.averages.field_goals_attempted) * a.gamesPlayed;
+                            const bVolume = parseFloat(b.averages.field_goals_attempted) * b.gamesPlayed;
+                            return bVolume - aVolume;
                         }
-                        return fgDiff;
+                        return efficiencyDiff;
                     });
             default:
                 return filtered;
@@ -511,8 +557,18 @@ export default function Leaderboards({ players, mvpSettings }) {
                                                 <span className="text-orange-400 font-bold text-xs lg:text-sm">{index + 4}</span>
                                             </div>
                                             
-                                            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                                <Users className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
+                                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                {player.photo_path ? (
+                                                    <img
+                                                        src={`/storage/${player.photo_path}`}
+                                                        alt={player.user?.name}
+                                                        className="w-full h-full object-cover rounded-full"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+                                                        <Users className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
+                                                    </div>
+                                                )}
                                             </div>
                                             
                                             <div className="min-w-0 flex-1">

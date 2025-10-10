@@ -186,6 +186,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                 shooting_efficiency_weight: season.mvp_settings.shooting_efficiency_weight || 10.0,
                 fouls_penalty: season.mvp_settings.fouls_penalty || 0.5,
                 turnovers_penalty: season.mvp_settings.turnovers_penalty || 1.0,
+                games_played_weight: season.mvp_settings.games_played_weight || 0.5,
             });
         }
     };
@@ -699,7 +700,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                                             type="number"
                                                             step="0.1"
                                                             min="0"
-                                                            value={mvpSettingsForm.data.points_weight}
+                                                            value={mvpSettingsForm.data.points_weight || 1.0}
                                                             onChange={(e) => mvpSettingsForm.setData('points_weight', parseFloat(e.target.value))}
                                                             className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
                                                         />
@@ -713,7 +714,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                                             type="number"
                                                             step="0.1"
                                                             min="0"
-                                                            value={mvpSettingsForm.data.rebounds_weight}
+                                                            value={mvpSettingsForm.data.rebounds_weight || 1.2}
                                                             onChange={(e) => mvpSettingsForm.setData('rebounds_weight', parseFloat(e.target.value))}
                                                             className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
                                                         />
@@ -727,7 +728,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                                             type="number"
                                                             step="0.1"
                                                             min="0"
-                                                            value={mvpSettingsForm.data.assists_weight}
+                                                            value={mvpSettingsForm.data.assists_weight || 1.5}
                                                             onChange={(e) => mvpSettingsForm.setData('assists_weight', parseFloat(e.target.value))}
                                                             className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
                                                         />
@@ -741,7 +742,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                                             type="number"
                                                             step="0.1"
                                                             min="0"
-                                                            value={mvpSettingsForm.data.steals_weight}
+                                                            value={mvpSettingsForm.data.steals_weight || 2.0}
                                                             onChange={(e) => mvpSettingsForm.setData('steals_weight', parseFloat(e.target.value))}
                                                             className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
                                                         />
@@ -755,7 +756,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                                             type="number"
                                                             step="0.1"
                                                             min="0"
-                                                            value={mvpSettingsForm.data.blocks_weight}
+                                                            value={mvpSettingsForm.data.blocks_weight || 2.0}
                                                             onChange={(e) => mvpSettingsForm.setData('blocks_weight', parseFloat(e.target.value))}
                                                             className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
                                                         />
@@ -769,7 +770,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                                             type="number"
                                                             step="0.1"
                                                             min="0"
-                                                            value={mvpSettingsForm.data.shooting_efficiency_weight}
+                                                            value={mvpSettingsForm.data.shooting_efficiency_weight || 10.0}
                                                             onChange={(e) => mvpSettingsForm.setData('shooting_efficiency_weight', parseFloat(e.target.value))}
                                                             className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
                                                         />
@@ -790,7 +791,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                                             type="number"
                                                             step="0.1"
                                                             min="0"
-                                                            value={mvpSettingsForm.data.fouls_penalty}
+                                                            value={mvpSettingsForm.data.fouls_penalty || 0.5}
                                                             onChange={(e) => mvpSettingsForm.setData('fouls_penalty', parseFloat(e.target.value))}
                                                             className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
                                                         />
@@ -804,7 +805,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                                             type="number"
                                                             step="0.1"
                                                             min="0"
-                                                            value={mvpSettingsForm.data.turnovers_penalty}
+                                                            value={mvpSettingsForm.data.turnovers_penalty || 1.0}
                                                             onChange={(e) => mvpSettingsForm.setData('turnovers_penalty', parseFloat(e.target.value))}
                                                             className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
                                                         />
@@ -819,7 +820,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                                             step="0.1"
                                                             min="0"
                                                             max="1"
-                                                            value={mvpSettingsForm.data.games_played_weight}
+                                                            value={mvpSettingsForm.data.games_played_weight || 0.5}
                                                             onChange={(e) => mvpSettingsForm.setData('games_played_weight', parseFloat(e.target.value))}
                                                             className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
                                                         />
