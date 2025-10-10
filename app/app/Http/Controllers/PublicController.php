@@ -235,6 +235,7 @@ class PublicController extends Controller
             'shooting_efficiency_weight' => 10.0,
             'fouls_penalty' => 0.5,
             'turnovers_penalty' => 1.0,
+            'games_played_weight' => 0.5,
         ];
         
         $mvpSettings = $activeLeague->mvp_settings ? $activeLeague->mvp_settings : $defaultMvpSettings;

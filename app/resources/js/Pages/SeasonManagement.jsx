@@ -55,6 +55,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
         shooting_efficiency_weight: 10.0,
         fouls_penalty: 0.5,
         turnovers_penalty: 1.0,
+        games_played_weight: 0.5, // New: minimum 50% weight scaling to 100% based on games played
     });
 
     // Check if user is admin
@@ -199,6 +200,7 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
             shooting_efficiency_weight: 10.0,
             fouls_penalty: 0.5,
             turnovers_penalty: 1.0,
+            games_played_weight: 0.5,
         });
     };
 
@@ -806,6 +808,24 @@ export default function SeasonManagement({ auth, seasons, availableTeams, allTea
                                                             onChange={(e) => mvpSettingsForm.setData('turnovers_penalty', parseFloat(e.target.value))}
                                                             className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
                                                         />
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Games Played Weight (0.0 - 1.0)
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="0"
+                                                            max="1"
+                                                            value={mvpSettingsForm.data.games_played_weight}
+                                                            onChange={(e) => mvpSettingsForm.setData('games_played_weight', parseFloat(e.target.value))}
+                                                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                                        />
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            Minimum weight applied to ratings. Players with more games get higher weight (up to 100%).
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>

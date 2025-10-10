@@ -40,6 +40,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
         email: '',
         phone: '',
         create_new: false,
+        photo: null,
     });
 
     const editPlayerForm = useForm({
@@ -48,6 +49,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
         phone: '',
         jersey_number: '',
         position: '',
+        photo: null,
     });
 
     const handleCreateTeam = (e) => {
@@ -77,7 +79,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
         if (isEditingPlayer && editingPlayerId) {
             // Update existing player
             console.log('Updating player:', editingPlayerId, addPlayerForm.data);
-            addPlayerForm.put(`/admin/teams/update-player/${editingPlayerId}`, {
+            addPlayerForm.post(`/admin/teams/update-player/${editingPlayerId}`, {
                 onSuccess: () => {
                     console.log('Player updated successfully');
                     addPlayerForm.reset();
@@ -89,7 +91,8 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                 },
                 onError: (errors) => {
                     console.error('Update failed:', errors);
-                }
+                },
+                forceFormData: true,
             });
         } else {
             // Add new player
@@ -102,6 +105,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                     setIsEditingPlayer(false);
                     setEditingPlayerId(null);
                 },
+                forceFormData: true,
             });
         }
     };
@@ -190,24 +194,49 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
 
     const handleEditPlayer = (e) => {
         e.preventDefault();
-        editPlayerForm.put(route('admin.teams.update-player', selectedPlayerToEdit.id), {
+        
+        console.log('Form data before submit:', editPlayerForm.data);
+        console.log('Selected player:', selectedPlayerToEdit);
+        
+        // Check if form data is still valid
+        if (!editPlayerForm.data.name) {
+            console.error('Name is missing from form data!');
+            alert('Name field is empty. Form data may have been lost.');
+            return;
+        }
+        
+        if (!editPlayerForm.data.email) {
+            console.error('Email is missing from form data!');
+            alert('Email field is empty. Form data may have been lost.');
+            return;
+        }
+        
+        // Use simple POST request for file uploads
+        editPlayerForm.post(route('admin.teams.update-player', selectedPlayerToEdit.id), {
+            forceFormData: true,
             onSuccess: () => {
                 editPlayerForm.reset();
                 setEditPlayerDialogOpen(false);
                 setSelectedPlayerToEdit(null);
+            },
+            onError: (errors) => {
+                console.error('Edit form errors:', errors);
             },
         });
     };
 
     const openEditPlayerDialog = (player) => {
         setSelectedPlayerToEdit(player);
-        editPlayerForm.setData({
+        const playerData = {
             name: player.user.name,
             email: player.user.email,
             phone: player.user.phone || '',
             jersey_number: player.jersey_number || '',
             position: player.position || '',
-        });
+            photo: null, // Reset photo field for new uploads
+        };
+        console.log('Setting edit form data:', playerData);
+        editPlayerForm.setData(playerData);
         setEditPlayerDialogOpen(true);
     };
 
@@ -992,6 +1021,22 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                     <p className="text-red-600 text-xs mt-1">{addPlayerForm.errors.position}</p>
                                 )}
                             </div>
+
+                            <div className="mb-4">
+                                <label htmlFor="playerPhoto" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Player Photo (Optional)
+                                </label>
+                                <input
+                                    id="playerPhoto"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={e => addPlayerForm.setData('photo', e.target.files[0])}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                {addPlayerForm.errors.photo && (
+                                    <p className="text-red-600 text-xs mt-1">{addPlayerForm.errors.photo}</p>
+                                )}
+                            </div>
                             
                             <div className="flex gap-3">
                                 <button
@@ -1163,6 +1208,27 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                 </select>
                                 {editPlayerForm.errors.position && (
                                     <p className="text-red-600 text-xs mt-1">{editPlayerForm.errors.position}</p>
+                                )}
+                            </div>
+
+                            <div className="mb-4">
+                                <label htmlFor="editPlayerPhoto" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Player Photo (Optional)
+                                </label>
+                                <input
+                                    id="editPlayerPhoto"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={e => editPlayerForm.setData('photo', e.target.files[0])}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                {editPlayerForm.errors.photo && (
+                                    <p className="text-red-600 text-xs mt-1">{editPlayerForm.errors.photo}</p>
+                                )}
+                                {selectedPlayerToEdit?.photo_path && (
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Current photo: {selectedPlayerToEdit.photo_path.split('/').pop()}
+                                    </p>
                                 )}
                             </div>
                             

@@ -210,28 +210,28 @@ export default function GameDetail({ game, mvpSettings }) {
         const playersToShow = teamPlayers.length > 0 ? teamPlayers : [];
         
         return (
-            <div className="bg-[#1a1a2e] rounded-lg p-6 border border-[#16213e]">
-                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <Users className="h-5 w-5 text-orange-500" />
+            <div className="bg-[#1a1a2e] rounded-lg p-3 lg:p-6 border border-[#16213e]">
+                <h3 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4 flex items-center gap-2">
+                    <Users className="h-4 w-4 lg:h-5 lg:w-5 text-orange-500" />
                     {teamName} Player Statistics
                 </h3>
                 
                 {playersToShow.length > 0 ? (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
+                    <table className="min-w-full text-xs lg:text-sm">
                         <thead>
                             <tr className="border-b border-[#16213e]">
-                                <th className="text-left py-3 px-2 text-gray-300 font-medium">#</th>
-                                <th className="text-left py-3 px-2 text-gray-300 font-medium">Player</th>
-                                <th className="text-center py-3 px-2 text-gray-300 font-medium">PTS</th>
-                                <th className="text-center py-3 px-2 text-gray-300 font-medium">FG</th>
-                                <th className="text-center py-3 px-2 text-gray-300 font-medium">3PT</th>
-                                <th className="text-center py-3 px-2 text-gray-300 font-medium">FT</th>
-                                <th className="text-center py-3 px-2 text-gray-300 font-medium">REB</th>
-                                <th className="text-center py-3 px-2 text-gray-300 font-medium">AST</th>
-                                <th className="text-center py-3 px-2 text-gray-300 font-medium">STL</th>
-                                <th className="text-center py-3 px-2 text-gray-300 font-medium">BLK</th>
-                                <th className="text-center py-3 px-2 text-gray-300 font-medium">PF</th>
+                                <th className="text-left py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium">#</th>
+                                <th className="text-left py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium">Player</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium">PTS</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden sm:table-cell">FG</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden md:table-cell">3PT</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden md:table-cell">FT</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium">REB</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium">AST</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden lg:table-cell">STL</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden lg:table-cell">BLK</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden xl:table-cell">PF</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -345,7 +345,7 @@ export default function GameDetail({ game, mvpSettings }) {
             
             {/* Header */}
             <div className="bg-[#1a1a2e] border-b border-[#16213e]">
-                <div className="max-w-7xl mx-auto px-4 py-6">
+                <div className="max-w-7xl mx-auto px-4 py-4 lg:py-6">
                     <Link 
                         href="/" 
                         className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 transition-colors mb-4"
@@ -354,15 +354,15 @@ export default function GameDetail({ game, mvpSettings }) {
                         Back to Schedule
                     </Link>
                     
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-white mb-2">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                            <h1 className="text-xl lg:text-3xl font-bold text-white mb-2">
                                 {teamA?.name || 'Team A'} vs {teamB?.name || 'Team B'}
                             </h1>
-                            <div className="flex items-center gap-4 text-gray-400">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm lg:text-base text-gray-400">
                                 <div className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4" />
-                                    {gameDateTime.date}
+                                    <span className="truncate">{gameDateTime.date}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4" />
@@ -371,12 +371,12 @@ export default function GameDetail({ game, mvpSettings }) {
                                 {game.location && (
                                     <div className="flex items-center gap-2">
                                         <MapPin className="h-4 w-4" />
-                                        {game.location}
+                                        <span className="truncate">{game.location}</span>
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left lg:text-right">
                             <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                                 isCompleted 
                                     ? 'bg-green-100 text-green-800' 
@@ -395,9 +395,9 @@ export default function GameDetail({ game, mvpSettings }) {
             </div>
 
             {/* Game Score Card */}
-            <div className="max-w-7xl mx-auto px-4 py-8">
-                <div className="bg-[#1a1a2e] rounded-lg p-8 border border-[#16213e] mb-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
+                <div className="bg-[#1a1a2e] rounded-lg p-4 lg:p-8 border border-[#16213e] mb-6 lg:mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8 items-center">
                         {/* Home Team */}
                         <div className="text-center">
                             <Link 

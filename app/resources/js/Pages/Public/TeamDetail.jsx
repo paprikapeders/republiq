@@ -9,7 +9,7 @@ export default function TeamDetail({ team, games, activeLeague }) {
             
             {/* Header */}
             <div className="bg-[#1a1a2e] border-b border-[#16213e]">
-                <div className="max-w-7xl mx-auto px-4 py-6">
+                <div className="max-w-7xl mx-auto px-4 py-4 lg:py-6">
                     <Link 
                         href="/" 
                         className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 transition-colors mb-4"
@@ -18,16 +18,20 @@ export default function TeamDetail({ team, games, activeLeague }) {
                         Back to Teams
                     </Link>
                     
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-orange-100 rounded-full">
-                            <Users className="h-8 w-8 text-orange-600" />
+                    <div className="flex items-start gap-3 lg:gap-4">
+                        <div className="p-2 lg:p-3 bg-orange-100 rounded-full flex-shrink-0">
+                            <Users className="h-6 w-6 lg:h-8 lg:w-8 text-orange-600" />
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-bold text-white">{team.name}</h1>
-                            <div className="text-gray-400">
-                                {activeLeague ? activeLeague.name : team.leagues?.map(league => league.name).join(', ') || 'No leagues assigned'}
+                        <div className="min-w-0 flex-1">
+                            <h1 className="text-xl lg:text-3xl font-bold text-white">{team.name}</h1>
+                            <div className="text-sm lg:text-base text-gray-400">
+                                <div>
+                                    {activeLeague ? activeLeague.name : team.leagues?.map(league => league.name).join(', ') || 'No leagues assigned'}
+                                </div>
                                 {team.coach && (
-                                    <span className="ml-4">• Coach: {team.coach.name}</span>
+                                    <div className="mt-1">
+                                        Coach: {team.coach.name}
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -35,31 +39,31 @@ export default function TeamDetail({ team, games, activeLeague }) {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
                 {/* Player Statistics Table */}
-                <div className="bg-[#1a1a2e] rounded-lg p-6 border border-[#16213e] mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                        <Users className="h-6 w-6 text-orange-500" />
+                <div className="bg-[#1a1a2e] rounded-lg p-3 lg:p-6 border border-[#16213e] mb-6 lg:mb-8">
+                    <h2 className="text-lg lg:text-2xl font-bold text-white mb-4 lg:mb-6 flex items-center gap-2">
+                        <Users className="h-5 w-5 lg:h-6 lg:w-6 text-orange-500" />
                         Player Statistics - {activeLeague?.name || 'Season'}
                     </h2>
                     
                     {team.players && team.players.length > 0 ? (
                         <div className="overflow-x-auto">
-                            <table className="min-w-full text-sm">
+                            <table className="min-w-full text-xs sm:text-sm">
                                 <thead>
                                     <tr className="border-b border-[#16213e]">
-                                        <th className="text-left py-3 px-2 text-gray-300 font-medium">#</th>
-                                        <th className="text-left py-3 px-2 text-gray-300 font-medium">Player</th>
-                                        <th className="text-left py-3 px-2 text-gray-300 font-medium">Position</th>
-                                        <th className="text-center py-3 px-2 text-gray-300 font-medium">GP</th>
-                                        <th className="text-center py-3 px-2 text-gray-300 font-medium">PPG</th>
-                                        <th className="text-center py-3 px-2 text-gray-300 font-medium">RPG</th>
-                                        <th className="text-center py-3 px-2 text-gray-300 font-medium">APG</th>
-                                        <th className="text-center py-3 px-2 text-gray-300 font-medium">SPG</th>
-                                        <th className="text-center py-3 px-2 text-gray-300 font-medium">BPG</th>
-                                        <th className="text-center py-3 px-2 text-gray-300 font-medium">FG%</th>
-                                        <th className="text-center py-3 px-2 text-gray-300 font-medium">3P%</th>
-                                        <th className="text-center py-3 px-2 text-gray-300 font-medium">FT%</th>
+                                        <th className="text-left py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium">#</th>
+                                        <th className="text-left py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium">Player</th>
+                                        <th className="text-left py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium hidden sm:table-cell">Pos</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium">GP</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium">PPG</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium">RPG</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium">APG</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium hidden lg:table-cell">SPG</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium hidden lg:table-cell">BPG</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium hidden md:table-cell">FG%</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium hidden xl:table-cell">3P%</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-gray-300 font-medium hidden xl:table-cell">FT%</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -67,40 +71,45 @@ export default function TeamDetail({ team, games, activeLeague }) {
                                         const averages = player.averages || {};
                                         return (
                                             <tr key={index} className="border-b border-[#16213e]/50 hover:bg-[#0f0f1e] transition-colors">
-                                                <td className="py-3 px-2 text-orange-400 font-bold">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-orange-400 font-bold">
                                                     {player.jersey_number || player.number || '--'}
                                                 </td>
-                                                <td className="py-3 px-2 text-white font-medium">
-                                                    {player.user?.name || 'Unknown Player'}
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-white font-medium">
+                                                    <div className="truncate max-w-[100px] sm:max-w-none">
+                                                        {player.user?.name || 'Unknown Player'}
+                                                    </div>
+                                                    <div className="text-xs text-gray-400 sm:hidden">
+                                                        {player.position || '--'}
+                                                    </div>
                                                 </td>
-                                                <td className="py-3 px-2 text-gray-300">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-gray-300 hidden sm:table-cell">
                                                     {player.position || '--'}
                                                 </td>
-                                                <td className="py-3 px-2 text-center text-gray-300">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-gray-300">
                                                     {averages.games_played || 0}
                                                 </td>
-                                                <td className="py-3 px-2 text-center text-orange-400 font-bold">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-orange-400 font-bold">
                                                     {averages.points || 0}
                                                 </td>
-                                                <td className="py-3 px-2 text-center text-gray-300">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-gray-300">
                                                     {averages.rebounds || 0}
                                                 </td>
-                                                <td className="py-3 px-2 text-center text-gray-300">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-gray-300">
                                                     {averages.assists || 0}
                                                 </td>
-                                                <td className="py-3 px-2 text-center text-gray-300">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-gray-300 hidden lg:table-cell">
                                                     {averages.steals || 0}
                                                 </td>
-                                                <td className="py-3 px-2 text-center text-gray-300">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-gray-300 hidden lg:table-cell">
                                                     {averages.blocks || 0}
                                                 </td>
-                                                <td className="py-3 px-2 text-center text-gray-300">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-gray-300 hidden md:table-cell">
                                                     {averages.field_goal_percentage || 0}%
                                                 </td>
-                                                <td className="py-3 px-2 text-center text-gray-300">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-gray-300 hidden xl:table-cell">
                                                     {averages.three_point_percentage || 0}%
                                                 </td>
-                                                <td className="py-3 px-2 text-center text-gray-300">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-gray-300 hidden xl:table-cell">
                                                     {averages.free_throw_percentage || 0}%
                                                 </td>
                                             </tr>

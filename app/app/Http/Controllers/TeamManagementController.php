@@ -9,6 +9,7 @@ use App\Models\League;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -239,6 +240,12 @@ class TeamManagementController extends Controller
         }
         
         $playerName = $player->user->name;
+        
+        // Delete player photo if exists
+        if ($player->photo_path) {
+            Storage::disk('public')->delete($player->photo_path);
+        }
+        
         $player->delete();
         
         return redirect()->back()->with('success', $playerName . ' removed from team.');
@@ -260,6 +267,7 @@ class TeamManagementController extends Controller
             'team_id' => 'required|exists:teams,id',
             'jersey_number' => 'nullable|integer|min:0|max:99',
             'position' => 'nullable|string|max:255',
+            'photo' => 'nullable|image|max:2048', // 2MB max
         ];
         
         // If user_id is provided, validate it exists
@@ -307,12 +315,19 @@ class TeamManagementController extends Controller
             return redirect()->back()->withErrors(['error' => 'User is already a member of this team.']);
         }
         
+        // Handle photo upload
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('player_photos', 'public');
+        }
+        
         Player::create([
             'team_id' => $request->team_id,
             'user_id' => $userId,
             'jersey_number' => $request->jersey_number,
             'position' => $request->position,
             'status' => 'approved', // Admin can directly approve
+            'photo_path' => $photoPath,
         ]);
         
         $successMessage = $request->filled('user_id') 
@@ -335,6 +350,12 @@ class TeamManagementController extends Controller
         
         $playerName = $player->user->name;
         $teamName = $player->team->name;
+        
+        // Delete player photo if exists
+        if ($player->photo_path) {
+            Storage::disk('public')->delete($player->photo_path);
+        }
+        
         $player->delete();
         
         return redirect()->back()->with('success', $playerName . ' removed from ' . $teamName . '.');
@@ -369,12 +390,31 @@ class TeamManagementController extends Controller
             return redirect()->back()->withErrors(['error' => 'Unauthorized action.']);
         }
         
+        // Debug: Check what we're actually receiving
+        \Log::info('Request method:', [$request->method()]);
+        \Log::info('Request _method:', [$request->input('_method')]);
+        \Log::info('Request all:', $request->all());
+        \Log::info('Request files:', $request->allFiles());
+
+        // Ensure we have the required fields
+        if (!$request->filled('name') || !$request->filled('email')) {
+            \Log::error('Missing required fields in request', [
+                'has_name' => $request->has('name'),
+                'has_email' => $request->has('email'),
+                'name_value' => $request->input('name'),
+                'email_value' => $request->input('email'),
+                'all_data' => $request->all()
+            ]);
+            return redirect()->back()->withErrors(['error' => 'Missing required fields. Please try again.']);
+        }
+        
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $player->user->id,
             'phone' => 'nullable|string|max:20',
             'jersey_number' => 'nullable|integer|min:0|max:99',
             'position' => 'nullable|string|max:255',
+            'photo' => 'nullable|image|max:2048', // 2MB max
         ]);
         
         // Update user information
@@ -384,11 +424,22 @@ class TeamManagementController extends Controller
             'phone' => $request->phone,
         ]);
         
-        // Update player-specific information
-        $player->update([
+        // Handle photo upload
+        $updateData = [
             'jersey_number' => $request->filled('jersey_number') ? $request->jersey_number : null,
             'position' => $request->filled('position') ? $request->position : null,
-        ]);
+        ];
+        
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if ($player->photo_path) {
+                Storage::disk('public')->delete($player->photo_path);
+            }
+            $updateData['photo_path'] = $request->file('photo')->store('player_photos', 'public');
+        }
+        
+        // Update player-specific information
+        $player->update($updateData);
         
         return redirect()->route('teams.index')->with('success', 'Player details updated successfully!');
     }

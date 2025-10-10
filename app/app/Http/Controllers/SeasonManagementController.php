@@ -220,6 +220,7 @@ class SeasonManagementController extends Controller
             'shooting_efficiency_weight' => 'required|numeric|min:0',
             'fouls_penalty' => 'required|numeric|min:0',
             'turnovers_penalty' => 'required|numeric|min:0',
+            'games_played_weight' => 'required|numeric|min:0|max:1',
         ]);
 
         // Store MVP settings as JSON in the league record

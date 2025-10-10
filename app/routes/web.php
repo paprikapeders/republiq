@@ -62,7 +62,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/teams/add-player', [TeamManagementController::class, 'addPlayerToTeam'])->name('admin.teams.add-player');
         Route::delete('/admin/teams/remove-player/{player}', [TeamManagementController::class, 'adminRemovePlayer'])->name('admin.teams.remove-player');
         Route::get('/admin/teams/edit-player/{player}', [TeamManagementController::class, 'editPlayer'])->name('admin.teams.edit-player');
-        Route::put('/admin/teams/update-player/{player}', [TeamManagementController::class, 'updatePlayer'])->name('admin.teams.update-player');
+        Route::post('/admin/teams/update-player/{player}', [TeamManagementController::class, 'updatePlayer'])->name('admin.teams.update-player');
     });
     
     // Live Scoresheet Routes
