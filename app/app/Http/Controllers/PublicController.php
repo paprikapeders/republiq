@@ -92,6 +92,43 @@ class PublicController extends Controller
         ]);
     }
 
+    public function schedules()
+    {
+        // Get active season/league
+        $activeLeague = League::where('status', 'active')
+            ->orWhere('is_active', true)
+            ->first();
+
+        // Get all games
+        $games = Game::with(['teamA', 'teamB', 'league'])
+            ->when($activeLeague, function ($query) use ($activeLeague) {
+                return $query->where('league_id', $activeLeague->id);
+            })
+            ->orderBy('date', 'asc')
+            ->get();
+
+        // Get teams for the active season
+        $teams = Team::with(['leagues'])
+            ->when($activeLeague, function ($query) use ($activeLeague) {
+                return $query->whereHas('leagues', function ($q) use ($activeLeague) {
+                    $q->where('leagues.id', $activeLeague->id);
+                });
+            })
+            ->orderBy('name')
+            ->get();
+
+        // Get all leagues/seasons
+        $seasons = League::orderBy('year', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('Public/PublicSchedules', [
+            'games' => $games,
+            'teams' => $teams,
+            'seasons' => $seasons,
+        ]);
+    }
+
     public function gameDetail(Game $game)
     {
         // Load game with all related data including player statistics
@@ -197,6 +234,77 @@ class PublicController extends Controller
             'team' => $team,
             'games' => $games,
             'activeLeague' => $activeLeague,
+        ]);
+    }
+
+    public function teams()
+    {
+        // Get active league
+        $activeLeague = League::where('status', 'active')
+            ->orWhere('is_active', true)
+            ->first();
+
+        // Get teams for the active season with player statistics averages
+        $teams = Team::with(['leagues', 'coach', 'players.user', 'players.playerStats' => function ($query) use ($activeLeague) {
+                if ($activeLeague) {
+                    $query->whereHas('game', function ($q) use ($activeLeague) {
+                        $q->where('league_id', $activeLeague->id);
+                    });
+                }
+            }])
+            ->when($activeLeague, function ($query) use ($activeLeague) {
+                return $query->whereHas('leagues', function ($q) use ($activeLeague) {
+                    $q->where('leagues.id', $activeLeague->id);
+                });
+            })
+            ->orderBy('name')
+            ->get();
+
+        // Calculate player averages for each team
+        $teams->each(function ($team) {
+            $team->players->each(function ($player) {
+                $stats = $player->playerStats;
+                $gameCount = $stats->count();
+                
+                if ($gameCount > 0) {
+                    $player->averages = [
+                        'games_played' => $gameCount,
+                        'points' => round($stats->avg('points'), 1),
+                        'rebounds' => round($stats->avg('rebounds'), 1),
+                        'assists' => round($stats->avg('assists'), 1),
+                        'steals' => round($stats->avg('steals'), 1),
+                        'blocks' => round($stats->avg('blocks'), 1),
+                        'field_goal_percentage' => $stats->sum('field_goals_attempted') > 0 ? 
+                            round(($stats->sum('field_goals_made') / $stats->sum('field_goals_attempted')) * 100, 1) : 0,
+                        'three_point_percentage' => $stats->sum('three_pointers_attempted') > 0 ? 
+                            round(($stats->sum('three_pointers_made') / $stats->sum('three_pointers_attempted')) * 100, 1) : 0,
+                        'free_throw_percentage' => $stats->sum('free_throws_attempted') > 0 ? 
+                            round(($stats->sum('free_throws_made') / $stats->sum('free_throws_attempted')) * 100, 1) : 0,
+                    ];
+                } else {
+                    $player->averages = [
+                        'games_played' => 0,
+                        'points' => 0,
+                        'rebounds' => 0,
+                        'assists' => 0,
+                        'steals' => 0,
+                        'blocks' => 0,
+                        'field_goal_percentage' => 0,
+                        'three_point_percentage' => 0,
+                        'free_throw_percentage' => 0,
+                    ];
+                }
+            });
+        });
+
+        // Get all leagues/seasons
+        $seasons = League::orderBy('year', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('Public/PublicTeams', [
+            'teams' => $teams,
+            'seasons' => $seasons,
         ]);
     }
 
