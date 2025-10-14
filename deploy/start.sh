@@ -33,7 +33,6 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 echo "Optimizing Laravel..."
 php artisan config:cache
 php artisan route:cache
-php artisan view:cache
 
 # Test nginx configuration
 echo "Testing nginx configuration..."
