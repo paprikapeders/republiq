@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { Trophy, Medal, Award, Target, Shield, Users, Zap, Eye, TrendingUp } from 'lucide-react';
-import { PublicNavbar } from '@/Components/Public/PublicNavbar';
+import { PublicNavbar } from '@/Pages/Public/PublicNavbar';
 
 export default function Leaderboards({ players, mvpSettings }) {
     const [activeTab, setActiveTab] = useState('overall');
@@ -337,17 +337,17 @@ export default function Leaderboards({ players, mvpSettings }) {
         <>
             <Head title="Leaderboards - Queens Ballers Republiq" />
             
-            <div className="min-h-screen bg-gradient-to-br from-[#0f0f23] via-[#1a1a2e] to-[#16213e]">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
                 <PublicNavbar 
                     currentPage="leaderboards"
                     onNavigate={handleNavigate}
                 />
                 
                 {/* Header */}
-                <div className="bg-[#1a1a2e]/90 border-b border-[#16213e]/30 backdrop-blur-sm sticky top-0 z-10">
+                <div className="bg-white/90 border-b border-orange-200/30 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
                         <div className="text-center">
-                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-1 lg:mb-2">Leaderboards</h1>
+                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-1 lg:mb-2">Leaderboards</h1>
                             <p className="text-sm lg:text-base text-gray-400">Top performers in Queens Ballers Republiq</p>
                         </div>
                     </div>
@@ -364,8 +364,8 @@ export default function Leaderboards({ players, mvpSettings }) {
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm lg:text-base font-medium transition-all ${
                                         activeTab === tab.id
-                                            ? 'bg-orange-500 text-white shadow-lg'
-                                            : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg'
+                                            : 'bg-white/80 text-slate-600 hover:bg-white/90 border border-slate-200'
                                     }`}
                                 >
                                     <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -379,7 +379,7 @@ export default function Leaderboards({ players, mvpSettings }) {
                     {/* Top 3 Podium */}
                     {top3.length > 0 && (
                         <div className="mb-8 lg:mb-12">
-                            <h2 className="text-xl lg:text-2xl font-bold text-white text-center mb-6 lg:mb-8">
+                            <h2 className="text-xl lg:text-2xl font-bold text-slate-800 text-center mb-6 lg:mb-8">
                                 Top 3 - {tabs.find(t => t.id === activeTab)?.label}
                             </h2>
                             
@@ -387,13 +387,13 @@ export default function Leaderboards({ players, mvpSettings }) {
                                 {/* 2nd Place */}
                                 {top3[1] && (
                                     <div className="order-2 sm:order-1">
-                                        <div className="bg-gradient-to-br from-gray-600/20 to-gray-700/20 rounded-xl lg:rounded-2xl p-4 lg:p-6 text-center border border-gray-500/30 hover:border-gray-400/50 transition-all duration-300 transform hover:-translate-y-1">
+                                        <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 text-center border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                                             <div className="flex justify-center mb-3 lg:mb-4">
-                                                <Medal className="h-8 w-8 lg:h-12 lg:w-12 text-gray-300" />
+                                                <Medal className="h-8 w-8 lg:h-12 lg:w-12 text-slate-400" />
                                             </div>
                                             
                                             {/* Player Image */}
-                                            <div className="w-16 h-16 lg:w-24 lg:h-24 mx-auto mb-3 lg:mb-4 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center overflow-hidden">
+                                            <div className="w-16 h-16 lg:w-24 lg:h-24 mx-auto mb-3 lg:mb-4 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center overflow-hidden">
                                                 {top3[1].photo_path ? (
                                                     <img
                                                         src={`/storage/${top3[1].photo_path}`}
@@ -405,17 +405,17 @@ export default function Leaderboards({ players, mvpSettings }) {
                                                 )}
                                             </div>
                                             
-                                            <h3 className="text-lg lg:text-xl font-bold text-white mb-1 truncate">
+                                            <h3 className="text-base lg:text-lg font-bold text-slate-800 mb-1 lg:mb-2 truncate">
                                                 {top3[1].user?.name || 'Unknown Player'}
                                             </h3>
-                                            <p className="text-gray-400 text-xs lg:text-sm mb-2 lg:mb-3 truncate">{top3[1].team?.name}</p>
+                                            <p className="text-slate-600 text-xs lg:text-sm mb-2 lg:mb-3 truncate">{top3[1].team?.name}</p>
                                             
-                                            <div className="bg-white/10 rounded-lg p-2 lg:p-3 mb-3 lg:mb-4">
-                                                <p className="text-xl lg:text-2xl font-bold text-gray-300">{getStatValue(top3[1], activeTab)}</p>
-                                                <p className="text-gray-400 text-xs lg:text-sm">{getStatLabel(activeTab)}</p>
+                                            <div className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-lg p-2 lg:p-3 mb-3 lg:mb-4">
+                                                <p className="text-xl lg:text-2xl font-bold text-slate-700">{getStatValue(top3[1], activeTab)}</p>
+                                                <p className="text-slate-600 text-xs lg:text-sm">{getStatLabel(activeTab)}</p>
                                             </div>
                                             
-                                            <div className="grid grid-cols-2 gap-1 lg:gap-2 text-xs text-gray-400">
+                                            <div className="grid grid-cols-2 gap-1 lg:gap-2 text-xs text-slate-600">
                                                 <div>
                                                     <p className="font-medium">{top3[1].averages.points}</p>
                                                     <p>PPG</p>
@@ -439,13 +439,13 @@ export default function Leaderboards({ players, mvpSettings }) {
 
                                 {/* 1st Place */}
                                 <div className="order-1 sm:order-2">
-                                    <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-700/20 rounded-xl lg:rounded-2xl p-6 lg:p-8 text-center border border-yellow-500/30 hover:border-yellow-400/50 transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2 shadow-2xl">
+                                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl lg:rounded-2xl p-6 lg:p-8 text-center border border-yellow-300 shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2">
                                         <div className="flex justify-center mb-3 lg:mb-4">
                                             <Trophy className="h-12 w-12 lg:h-16 lg:w-16 text-yellow-400" />
                                         </div>
                                         
                                         {/* Player Image */}
-                                        <div className="w-20 h-20 lg:w-32 lg:h-32 mx-auto mb-4 lg:mb-6 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg overflow-hidden">
+                                        <div className="w-20 h-20 lg:w-32 lg:h-32 mx-auto mb-4 lg:mb-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg overflow-hidden">
                                             {top3[0].photo_path ? (
                                                 <img
                                                     src={`/storage/${top3[0].photo_path}`}
@@ -457,17 +457,17 @@ export default function Leaderboards({ players, mvpSettings }) {
                                             )}
                                         </div>
                                         
-                                        <h3 className="text-xl lg:text-2xl font-bold text-white mb-1 lg:mb-2 truncate">
+                                        <h3 className="text-xl lg:text-2xl font-bold text-slate-800 mb-1 lg:mb-2 truncate">
                                             {top3[0].user?.name || 'Unknown Player'}
                                         </h3>
-                                        <p className="text-gray-400 text-sm lg:text-base mb-3 lg:mb-4 truncate">{top3[0].team?.name}</p>
+                                        <p className="text-slate-600 text-sm lg:text-base mb-3 lg:mb-4 truncate">{top3[0].team?.name}</p>
                                         
-                                        <div className="bg-yellow-500/20 rounded-lg p-3 lg:p-4 mb-4 lg:mb-6">
-                                            <p className="text-2xl lg:text-3xl font-bold text-yellow-400">{getStatValue(top3[0], activeTab)}</p>
-                                            <p className="text-yellow-300 text-xs lg:text-sm">{getStatLabel(activeTab)}</p>
+                                        <div className="bg-gradient-to-r from-yellow-200 to-orange-200 rounded-lg p-3 lg:p-4 mb-4 lg:mb-6">
+                                            <p className="text-2xl lg:text-3xl font-bold text-orange-700">{getStatValue(top3[0], activeTab)}</p>
+                                            <p className="text-orange-600 text-xs lg:text-sm">{getStatLabel(activeTab)}</p>
                                         </div>
                                         
-                                        <div className="grid grid-cols-2 gap-2 lg:gap-3 text-xs lg:text-sm text-gray-300">
+                                        <div className="grid grid-cols-2 gap-2 lg:gap-3 text-xs lg:text-sm text-slate-600">
                                             <div>
                                                 <p className="font-bold text-sm lg:text-lg">{top3[0].averages.points}</p>
                                                 <p className="text-xs">PPG</p>
@@ -491,13 +491,13 @@ export default function Leaderboards({ players, mvpSettings }) {
                                 {/* 3rd Place */}
                                 {top3[2] && (
                                     <div className="order-3 sm:order-3">
-                                        <div className="bg-gradient-to-br from-amber-700/20 to-amber-800/20 rounded-xl lg:rounded-2xl p-4 lg:p-6 text-center border border-amber-600/30 hover:border-amber-500/50 transition-all duration-300 transform hover:-translate-y-1">
+                                        <div className="bg-white rounded-xl lg:rounded-2xl p-4 lg:p-6 text-center border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                                             <div className="flex justify-center mb-3 lg:mb-4">
-                                                <Award className="h-8 w-8 lg:h-12 lg:w-12 text-amber-600" />
+                                                <Award className="h-8 w-8 lg:h-12 lg:w-12 text-amber-500" />
                                             </div>
                                             
                                             {/* Player Image */}
-                                            <div className="w-16 h-16 lg:w-24 lg:h-24 mx-auto mb-3 lg:mb-4 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center overflow-hidden">
+                                            <div className="w-16 h-16 lg:w-24 lg:h-24 mx-auto mb-3 lg:mb-4 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center overflow-hidden">
                                                 {top3[2].photo_path ? (
                                                     <img
                                                         src={`/storage/${top3[2].photo_path}`}
@@ -509,14 +509,14 @@ export default function Leaderboards({ players, mvpSettings }) {
                                                 )}
                                             </div>
                                             
-                                            <h3 className="text-lg lg:text-xl font-bold text-white mb-1 truncate">
+                                            <h3 className="text-lg lg:text-xl font-bold text-slate-800 mb-1 truncate">
                                                 {top3[2].user?.name || 'Unknown Player'}
                                             </h3>
-                                            <p className="text-gray-400 text-xs lg:text-sm mb-2 lg:mb-3 truncate">{top3[2].team?.name}</p>
+                                            <p className="text-slate-600 text-xs lg:text-sm mb-2 lg:mb-3 truncate">{top3[2].team?.name}</p>
                                             
-                                            <div className="bg-white/10 rounded-lg p-2 lg:p-3 mb-3 lg:mb-4">
-                                                <p className="text-xl lg:text-2xl font-bold text-amber-600">{getStatValue(top3[2], activeTab)}</p>
-                                                <p className="text-gray-400 text-xs lg:text-sm">{getStatLabel(activeTab)}</p>
+                                            <div className="bg-gradient-to-r from-amber-100 to-amber-200 rounded-lg p-2 lg:p-3 mb-3 lg:mb-4">
+                                                <p className="text-xl lg:text-2xl font-bold text-amber-700">{getStatValue(top3[2], activeTab)}</p>
+                                                <p className="text-amber-600 text-xs lg:text-sm">{getStatLabel(activeTab)}</p>
                                             </div>
                                             
                                             <div className="grid grid-cols-2 gap-1 lg:gap-2 text-xs text-gray-400">
@@ -546,15 +546,15 @@ export default function Leaderboards({ players, mvpSettings }) {
 
                     {/* Top 10 List */}
                     {rest.length > 0 && (
-                        <div className="bg-white/5 rounded-2xl p-3 lg:p-6 border border-white/10">
-                            <h2 className="text-lg lg:text-xl font-bold text-white mb-4 lg:mb-6">Rankings 4-10</h2>
+                        <div className="bg-white rounded-2xl p-3 lg:p-6 border border-slate-200 shadow-lg">
+                            <h2 className="text-lg lg:text-xl font-bold text-slate-800 mb-4 lg:mb-6">Rankings 4-10</h2>
                             
                             <div className="space-y-3">
                                 {rest.map((player, index) => (
-                                    <div key={player.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 lg:p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors gap-3 sm:gap-0">
+                                    <div key={player.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 lg:p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors gap-3 sm:gap-0 border border-slate-200">
                                         <div className="flex items-center gap-3 lg:gap-4 min-w-0 flex-1">
-                                            <div className="w-7 h-7 lg:w-8 lg:h-8 bg-orange-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                                                <span className="text-orange-400 font-bold text-xs lg:text-sm">{index + 4}</span>
+                                            <div className="w-7 h-7 lg:w-8 lg:h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <span className="text-orange-600 font-bold text-xs lg:text-sm">{index + 4}</span>
                                             </div>
                                             
                                             <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -565,40 +565,42 @@ export default function Leaderboards({ players, mvpSettings }) {
                                                         className="w-full h-full object-cover rounded-full"
                                                     />
                                                 ) : (
-                                                    <div className="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+                                                    <div className="w-full h-full bg-gradient-to-br from-slate-300 to-slate-400 rounded-full flex items-center justify-center">
                                                         <Users className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
                                                     </div>
                                                 )}
                                             </div>
                                             
                                             <div className="min-w-0 flex-1">
-                                                <h3 className="font-medium text-white truncate text-sm lg:text-base">{player.user?.name || 'Unknown Player'}</h3>
-                                                <p className="text-xs lg:text-sm text-gray-400 truncate">{player.team?.name}</p>
+                                                <h3 className="font-medium text-slate-800 truncate text-sm lg:text-base">{player.user?.name || 'Unknown Player'}</h3>
+                                                <p className="text-xs lg:text-sm text-slate-600 truncate">{player.team?.name}</p>
                                             </div>
                                         </div>
                                         
-                                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-4 text-xs lg:text-sm">
+                                        <div className="overflow-x-auto">
+                                            <div className="flex items-center gap-2 sm:gap-4 text-xs lg:text-sm min-w-max">
                                             <div className="text-center min-w-[50px]">
-                                                <p className="font-bold text-white">{getStatValue(player, activeTab)}</p>
-                                                <p className="text-gray-400">{getStatLabel(activeTab)}</p>
+                                                <p className="font-bold text-slate-800">{getStatValue(player, activeTab)}</p>
+                                                <p className="text-slate-600">{getStatLabel(activeTab)}</p>
                                             </div>
                                             <div className="text-center min-w-[45px]">
-                                                <p className="font-bold text-white">{player.averages.points}</p>
-                                                <p className="text-gray-400">PPG</p>
+                                                <p className="font-bold text-orange-600">{player.averages.points}</p>
+                                                <p className="text-slate-600">PPG</p>
                                             </div>
                                             <div className="text-center min-w-[45px]">
-                                                <p className="font-bold text-white">{player.averages.rebounds}</p>
-                                                <p className="text-gray-400">RPG</p>
+                                                <p className="font-bold text-slate-800">{player.averages.rebounds}</p>
+                                                <p className="text-slate-600">RPG</p>
                                             </div>
                                             <div className="text-center min-w-[45px]">
-                                                <p className="font-bold text-white">{player.averages.assists}</p>
-                                                <p className="text-gray-400">APG</p>
+                                                <p className="font-bold text-slate-800">{player.averages.assists}</p>
+                                                <p className="text-slate-600">APG</p>
                                             </div>
                                             <div className="text-center min-w-[35px]">
-                                                <p className="font-bold text-white">{player.gamesPlayed}</p>
-                                                <p className="text-gray-400">GP</p>
+                                                <p className="font-bold text-slate-800">{player.gamesPlayed}</p>
+                                                <p className="text-slate-600">GP</p>
                                             </div>
                                         </div>
+                                    </div>
                                     </div>
                                 ))}
                             </div>
@@ -606,10 +608,10 @@ export default function Leaderboards({ players, mvpSettings }) {
                     )}
 
                     {leaderboard.length === 0 && (
-                        <div className="text-center py-16">
-                            <Trophy className="h-24 w-24 text-gray-600 mx-auto mb-4" />
-                            <h3 className="text-xl font-medium text-gray-400 mb-2">No Statistics Available</h3>
-                            <p className="text-gray-500">Player statistics will appear here once games are completed.</p>
+                        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-lg">
+                            <Trophy className="h-24 w-24 text-slate-400 mx-auto mb-4" />
+                            <h3 className="text-xl font-medium text-slate-700 mb-2">No Statistics Available</h3>
+                            <p className="text-slate-600">Player statistics will appear here once games are completed.</p>
                         </div>
                     )}
                 </div>

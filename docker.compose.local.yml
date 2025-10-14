@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: queens_app
+    working_dir: /var/www/html/app
+    volumes:
+      - ./app:/var/www/html/app
+    depends_on:
+      - db
+    networks:
+      - queens_network
+
+  nginx:
+    image: nginx:latest
+    container_name: queens_nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./app:/var/www/html/app
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - queens_network
+
+  db:
+    image: mysql:8.0
+    container_name: queens_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: queens
+      MYSQL_USER: queens_user
+      MYSQL_PASSWORD: queens_pass
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - queens_network
+
+networks:
+  queens_network:
+
+volumes:
+  db_data:

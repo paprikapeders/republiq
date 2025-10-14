@@ -210,8 +210,8 @@ export default function GameDetail({ game, mvpSettings }) {
         const playersToShow = teamPlayers.length > 0 ? teamPlayers : [];
         
         return (
-            <div className="bg-[#1a1a2e] rounded-lg p-3 lg:p-6 border border-[#16213e]">
-                <h3 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-lg p-3 lg:p-6 border border-slate-200 shadow-lg">
+                <h3 className="text-lg lg:text-xl font-bold text-slate-800 mb-3 lg:mb-4 flex items-center gap-2">
                     <Users className="h-4 w-4 lg:h-5 lg:w-5 text-orange-500" />
                     {teamName} Player Statistics
                 </h3>
@@ -220,18 +220,18 @@ export default function GameDetail({ game, mvpSettings }) {
                 <div className="overflow-x-auto">
                     <table className="min-w-full text-xs lg:text-sm">
                         <thead>
-                            <tr className="border-b border-[#16213e]">
-                                <th className="text-left py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium">#</th>
-                                <th className="text-left py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium">Player</th>
-                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium">PTS</th>
-                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden sm:table-cell">FG</th>
-                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden md:table-cell">3PT</th>
-                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden md:table-cell">FT</th>
-                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium">REB</th>
-                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium">AST</th>
-                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden lg:table-cell">STL</th>
-                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden lg:table-cell">BLK</th>
-                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-gray-300 font-medium hidden xl:table-cell">PF</th>
+                            <tr className="border-b border-slate-200">
+                                <th className="text-left py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[30px]">#</th>
+                                <th className="text-left py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[80px]">Player</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[35px]">PTS</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[45px]">FG</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[45px]">3PT</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[40px]">FT</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[35px]">REB</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[35px]">AST</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[35px]">STL</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[35px]">BLK</th>
+                                <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[30px]">PF</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -257,43 +257,43 @@ export default function GameDetail({ game, mvpSettings }) {
                                 );
 
                                 return (
-                                    <tr key={index} className={`border-b border-[#16213e]/50 hover:bg-[#0f0f1e] transition-colors ${
+                                    <tr key={index} className={`border-b border-slate-200/50 hover:bg-slate-50 transition-colors ${
                                         isMvp ? 'bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30' : ''
                                     }`}>
                                         <td className={`py-3 px-2 font-bold ${isMvp ? 'text-yellow-400' : 'text-orange-400'}`}>
                                             {player?.jersey_number || player?.number || '--'}
                                             {isMvp && <Trophy className="h-4 w-4 inline ml-1 text-yellow-400" />}
                                         </td>
-                                        <td className={`py-3 px-2 font-medium ${isMvp ? 'text-yellow-100' : 'text-white'}`}>
+                                        <td className={`py-3 px-2 font-medium ${isMvp ? 'text-orange-700 font-bold' : 'text-slate-800'}`}>
                                             {player?.user?.name || player?.name || 'Unknown Player'}
                                             {isMvp && <span className="text-xs ml-2 bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">MVP</span>}
                                         </td>
-                                        <td className="py-3 px-2 text-center text-orange-400 font-bold">
+                                        <td className="py-3 px-2 text-center text-orange-600 font-bold">
                                             {stat.points || 0}
                                         </td>
-                                        <td className="py-3 px-2 text-center text-gray-300">
+                                        <td className="py-3 px-2 text-center text-slate-700">
                                             <div className="text-xs">
                                                 {stat.field_goals_made || 0}/{stat.field_goals_attempted || 0}
-                                                <span className="block text-gray-400">({fgPercentage}%)</span>
+                                                <span className="block text-slate-600">({fgPercentage}%)</span>
                                             </div>
                                         </td>
-                                        <td className="py-3 px-2 text-center text-gray-300">
+                                        <td className="py-3 px-2 text-center text-slate-700">
                                             <div className="text-xs">
                                                 {stat.three_pointers_made || 0}/{stat.three_pointers_attempted || 0}
-                                                <span className="block text-gray-400">({threePercentage}%)</span>
+                                                <span className="block text-slate-600">({threePercentage}%)</span>
                                             </div>
                                         </td>
-                                        <td className="py-3 px-2 text-center text-gray-300">
+                                        <td className="py-3 px-2 text-center text-slate-700">
                                             <div className="text-xs">
                                                 {stat.free_throws_made || 0}/{stat.free_throws_attempted || 0}
-                                                <span className="block text-gray-400">({ftPercentage}%)</span>
+                                                <span className="block text-slate-600">({ftPercentage}%)</span>
                                             </div>
                                         </td>
-                                        <td className="py-3 px-2 text-center text-gray-300">{stat.rebounds || 0}</td>
-                                        <td className="py-3 px-2 text-center text-gray-300">{stat.assists || 0}</td>
-                                        <td className="py-3 px-2 text-center text-gray-300">{stat.steals || 0}</td>
-                                        <td className="py-3 px-2 text-center text-gray-300">{stat.blocks || 0}</td>
-                                        <td className="py-3 px-2 text-center text-gray-300">{stat.fouls || 0}</td>
+                                        <td className="py-3 px-2 text-center text-slate-700">{stat.rebounds || 0}</td>
+                                        <td className="py-3 px-2 text-center text-slate-700">{stat.assists || 0}</td>
+                                        <td className="py-3 px-2 text-center text-slate-700">{stat.steals || 0}</td>
+                                        <td className="py-3 px-2 text-center text-slate-700">{stat.blocks || 0}</td>
+                                        <td className="py-3 px-2 text-center text-slate-700">{stat.fouls || 0}</td>
                                     </tr>
                                 );
                             })}
@@ -301,7 +301,7 @@ export default function GameDetail({ game, mvpSettings }) {
                     </table>
                 </div>
             ) : (
-                <div className="text-center py-8 text-gray-400">
+                <div className="text-center py-8 text-slate-600">
                     <p>No players available for this team.</p>
                 </div>
             )}
@@ -310,45 +310,45 @@ export default function GameDetail({ game, mvpSettings }) {
     };
 
     const TeamTotalsCard = ({ title, totals }) => (
-        <div className="bg-[#1a1a2e] rounded-lg p-6 border border-gray-700">
-            <h3 className="text-lg font-semibold mb-4 text-white">{title}</h3>
+        <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-lg">
+            <h3 className="text-lg font-semibold mb-4 text-slate-800">{title}</h3>
             <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-400">{totals.points || 0}</div>
-                    <div className="text-sm text-gray-400">Points</div>
+                    <div className="text-2xl font-bold text-orange-600">{totals.points || 0}</div>
+                    <div className="text-sm text-slate-600">Points</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-2xl font-bold text-white">{totals.rebounds || 0}</div>
-                    <div className="text-sm text-gray-400">Rebounds</div>
+                    <div className="text-2xl font-bold text-slate-800">{totals.rebounds || 0}</div>
+                    <div className="text-sm text-slate-600">Rebounds</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-2xl font-bold text-white">{totals.assists || 0}</div>
-                    <div className="text-sm text-gray-400">Assists</div>
+                    <div className="text-2xl font-bold text-slate-800">{totals.assists || 0}</div>
+                    <div className="text-sm text-slate-600">Assists</div>
                 </div>
                 <div className="text-center">
-                    <div className="text-2xl font-bold text-white">{totals.fouls || 0}</div>
-                    <div className="text-sm text-gray-400">Fouls</div>
+                    <div className="text-2xl font-bold text-slate-800">{totals.fouls || 0}</div>
+                    <div className="text-sm text-slate-600">Fouls</div>
                 </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-700">
-                <div className="text-sm text-gray-400">
+            <div className="mt-4 pt-4 border-t border-slate-200">
+                <div className="text-sm text-slate-700">
                     3PT: {totals.threePointers || 0} | 2PT: {totals.twoPointers || 0} | FT: {totals.freeThrows || 0}
                 </div>
-                <div className="text-xs text-gray-500 mt-2">
+                <div className="text-xs text-slate-600 mt-2">
                     Calculated from player stats: {(totals.threePointers || 0) * 3 + (totals.twoPointers || 0) * 2 + (totals.freeThrows || 0)} points
                 </div>
             </div>
         </div>
     );    return (
-        <div className="min-h-screen bg-[#0f0f1e] text-white">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50 text-slate-800">
             <Head title={`${teamA?.name || 'Team A'} vs ${teamB?.name || 'Team B'} - Game Detail`} />
             
             {/* Header */}
-            <div className="bg-[#1a1a2e] border-b border-[#16213e]">
+            <div className="bg-white/90 border-b border-orange-200 shadow-sm backdrop-blur-sm">
                 <div className="max-w-7xl mx-auto px-4 py-4 lg:py-6">
                     <Link 
                         href="/" 
-                        className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 transition-colors mb-4"
+                        className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 transition-colors mb-4 font-medium"
                     >
                         <ChevronLeft className="h-4 w-4" />
                         Back to Schedule
@@ -356,10 +356,10 @@ export default function GameDetail({ game, mvpSettings }) {
                     
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div className="min-w-0 flex-1">
-                            <h1 className="text-xl lg:text-3xl font-bold text-white mb-2">
+                            <h1 className="text-xl lg:text-3xl font-bold text-slate-800 mb-2">
                                 {teamA?.name || 'Team A'} vs {teamB?.name || 'Team B'}
                             </h1>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm lg:text-base text-gray-400">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm lg:text-base text-slate-600">
                                 <div className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4" />
                                     <span className="truncate">{gameDateTime.date}</span>
@@ -385,7 +385,7 @@ export default function GameDetail({ game, mvpSettings }) {
                                 {isCompleted ? '✅ Completed' : '⏳ Scheduled'}
                             </div>
                             {game.league && (
-                                <div className="mt-2 text-sm text-gray-400">
+                                <div className="mt-2 text-sm text-slate-600">
                                     {game.league.name}
                                 </div>
                             )}
@@ -396,18 +396,18 @@ export default function GameDetail({ game, mvpSettings }) {
 
             {/* Game Score Card */}
             <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
-                <div className="bg-[#1a1a2e] rounded-lg p-4 lg:p-8 border border-[#16213e] mb-6 lg:mb-8">
+                <div className="bg-white rounded-lg p-4 lg:p-8 border border-slate-200 shadow-lg mb-6 lg:mb-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8 items-center">
                         {/* Home Team */}
                         <div className="text-center">
                             <Link 
                                 href={`/teams/${teamA?.id}`}
-                                className="block hover:text-orange-400 transition-colors"
+                                className="block hover:text-orange-600 transition-colors"
                             >
-                                <h2 className="text-2xl font-bold text-white mb-2">
+                                <h2 className="text-2xl font-bold text-slate-800 mb-2">
                                     {teamA?.name || 'Team A'}
                                 </h2>
-                                <div className="text-4xl font-bold text-orange-400">
+                                <div className="text-4xl font-bold text-orange-600">
                                     {homeScore}
                                 </div>
                             </Link>
@@ -415,19 +415,19 @@ export default function GameDetail({ game, mvpSettings }) {
 
                         {/* VS */}
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-400">VS</div>
+                            <div className="text-2xl font-bold text-slate-600">VS</div>
                         </div>
 
                         {/* Away Team */}
                         <div className="text-center">
                             <Link 
                                 href={`/teams/${teamB?.id}`}
-                                className="block hover:text-orange-400 transition-colors"
+                                className="block hover:text-orange-600 transition-colors"
                             >
-                                <h2 className="text-2xl font-bold text-white mb-2">
+                                <h2 className="text-2xl font-bold text-slate-800 mb-2">
                                     {teamB?.name || 'Team B'}
                                 </h2>
-                                <div className="text-4xl font-bold text-orange-400">
+                                <div className="text-4xl font-bold text-orange-600">
                                     {awayScore}
                                 </div>
                             </Link>
@@ -459,7 +459,7 @@ export default function GameDetail({ game, mvpSettings }) {
                             </div>
                             
                             <div className="text-center">
-                                <div className="bg-[#1a1a2e] rounded-lg p-6 border border-yellow-500/20">
+                                <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-6 border border-yellow-300 shadow-lg">
                                     <div className="flex items-center justify-center gap-4 mb-4">
                                         <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
                                             <span className="text-2xl font-bold text-white">
@@ -467,34 +467,34 @@ export default function GameDetail({ game, mvpSettings }) {
                                             </span>
                                         </div>
                                         <div className="text-left">
-                                            <h4 className="text-2xl font-bold text-white">
+                                            <h4 className="text-2xl font-bold text-slate-800">
                                                 {mvp.player?.user?.name || mvp.player?.name}
                                             </h4>
-                                            <p className="text-yellow-400 font-medium">{mvp.team}</p>
-                                            <p className="text-gray-400 text-sm">MVP Rating: {mvp.rating}</p>
+                                            <p className="text-orange-600 font-medium">{mvp.team}</p>
+                                            <p className="text-slate-600 text-sm">MVP Rating: {mvp.rating}</p>
                                         </div>
                                     </div>
                                     
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                                        <div className="bg-[#0f0f1e] rounded-lg p-3">
-                                            <div className="text-2xl font-bold text-orange-400">{mvp.stats.points || 0}</div>
-                                            <div className="text-xs text-gray-400">Points</div>
+                                        <div className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-lg p-3">
+                                            <div className="text-2xl font-bold text-orange-600">{mvp.stats.points || 0}</div>
+                                            <div className="text-xs text-slate-600">Points</div>
                                         </div>
-                                        <div className="bg-[#0f0f1e] rounded-lg p-3">
-                                            <div className="text-2xl font-bold text-blue-400">{mvp.stats.rebounds || 0}</div>
-                                            <div className="text-xs text-gray-400">Rebounds</div>
+                                        <div className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-lg p-3">
+                                            <div className="text-2xl font-bold text-blue-600">{mvp.stats.rebounds || 0}</div>
+                                            <div className="text-xs text-slate-600">Rebounds</div>
                                         </div>
-                                        <div className="bg-[#0f0f1e] rounded-lg p-3">
-                                            <div className="text-2xl font-bold text-green-400">{mvp.stats.assists || 0}</div>
-                                            <div className="text-xs text-gray-400">Assists</div>
+                                        <div className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-lg p-3">
+                                            <div className="text-2xl font-bold text-green-600">{mvp.stats.assists || 0}</div>
+                                            <div className="text-xs text-slate-600">Assists</div>
                                         </div>
-                                        <div className="bg-[#0f0f1e] rounded-lg p-3">
-                                            <div className="text-2xl font-bold text-purple-400">
+                                        <div className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-lg p-3">
+                                            <div className="text-2xl font-bold text-purple-600">
                                                 {(mvp.stats.field_goals_attempted > 0 ? 
                                                     ((mvp.stats.field_goals_made / mvp.stats.field_goals_attempted) * 100).toFixed(1) : 
                                                     '0.0')}%
                                             </div>
-                                            <div className="text-xs text-gray-400">FG%</div>
+                                            <div className="text-xs text-slate-600">FG%</div>
                                         </div>
                                     </div>
                                 </div>
@@ -521,8 +521,8 @@ export default function GameDetail({ game, mvpSettings }) {
 
                 {!isCompleted && (
                     <div className="mt-8 text-center">
-                        <div className="bg-[#1a1a2e] rounded-lg p-6 border border-[#16213e]">
-                            <p className="text-gray-400">
+                        <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-lg">
+                            <p className="text-slate-600">
                                 Game statistics will be available after the game is completed.
                             </p>
                         </div>

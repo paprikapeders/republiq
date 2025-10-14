@@ -14,6 +14,11 @@ Route::get('/games/{game}', [App\Http\Controllers\PublicController::class, 'game
 Route::get('/teams/{team}', [App\Http\Controllers\PublicController::class, 'teamDetail'])->name('public.team.detail');
 Route::get('/leaderboards', [App\Http\Controllers\PublicController::class, 'leaderboards'])->name('public.leaderboards');
 
+// Theme Showcase Route
+Route::get('/theme-showcase', function () {
+    return Inertia::render('Public/ThemeShowcase');
+})->name('theme.showcase');
+
 Route::get('/dashboard', function () {
     $user = auth()->user();
     

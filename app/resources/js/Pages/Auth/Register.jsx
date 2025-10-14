@@ -23,19 +23,19 @@ export default function Register() {
         <>
             <Head title="Register" />
 
-            <div className="min-h-screen bg-[#0f0f1e] flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50 flex items-center justify-center p-4">
                 {/* Back to Home Button */}
                 <Link
                     href="/"
-                    className="absolute top-6 left-6 text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
+                    className="absolute top-6 left-6 text-slate-600 hover:text-slate-800 flex items-center gap-2 transition-colors"
                 >
                     <ArrowLeft className="h-4 w-4" />
                     Back to Home
                 </Link>
 
-                <div className="w-full max-w-md mx-auto bg-[#1a1a2e] border border-[#16213e] rounded-lg overflow-hidden shadow-2xl">
+                <div className="w-full max-w-md mx-auto bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xl">
                     {/* Header */}
-                    <div className="text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6">
+                    <div className="text-center bg-gradient-to-r from-orange-500 to-blue-600 text-white p-6">
                         <div className="flex items-center justify-center gap-3 mb-2">
                             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                                 <Trophy className="h-7 w-7 text-white" />
@@ -52,14 +52,14 @@ export default function Register() {
                         <form onSubmit={submit} className="space-y-4">
                             {/* Name */}
                             <div className="space-y-2">
-                                <label htmlFor="name" className="text-sm font-medium text-gray-300">
+                                <label htmlFor="name" className="text-sm font-medium text-slate-700">
                                     Full Name
                                 </label>
                                 <input
                                     id="name"
                                     name="name"
                                     value={data.name}
-                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     autoComplete="name"
                                     placeholder="Enter your full name"
                                     onChange={(e) => setData('name', e.target.value)}
@@ -72,7 +72,7 @@ export default function Register() {
 
                             {/* Email */}
                             <div className="space-y-2">
-                                <label htmlFor="email" className="text-sm font-medium text-gray-300">
+                                <label htmlFor="email" className="text-sm font-medium text-slate-700">
                                     Email
                                 </label>
                                 <input
@@ -80,7 +80,7 @@ export default function Register() {
                                     type="email"
                                     name="email"
                                     value={data.email}
-                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     autoComplete="username"
                                     placeholder="Enter your email"
                                     onChange={(e) => setData('email', e.target.value)}
@@ -93,7 +93,7 @@ export default function Register() {
 
                             {/* Phone */}
                             <div className="space-y-2">
-                                <label htmlFor="phone" className="text-sm font-medium text-gray-300">
+                                <label htmlFor="phone" className="text-sm font-medium text-slate-700">
                                     Phone (Optional)
                                 </label>
                                 <input
@@ -101,7 +101,7 @@ export default function Register() {
                                     type="tel"
                                     name="phone"
                                     value={data.phone}
-                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     placeholder="Enter your phone number"
                                     onChange={(e) => setData('phone', e.target.value)}
                                 />
@@ -112,14 +112,14 @@ export default function Register() {
 
                             {/* Role */}
                             <div className="space-y-2">
-                                <label htmlFor="role" className="text-sm font-medium text-gray-300">
+                                <label htmlFor="role" className="text-sm font-medium text-slate-700">
                                     Role
                                 </label>
                                 <select
                                     id="role"
                                     name="role"
                                     value={data.role}
-                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     onChange={(e) => setData('role', e.target.value)}
                                     required
                                 >
@@ -135,7 +135,7 @@ export default function Register() {
 
                             {/* Password */}
                             <div className="space-y-2">
-                                <label htmlFor="password" className="text-sm font-medium text-gray-300">
+                                <label htmlFor="password" className="text-sm font-medium text-slate-700">
                                     Password
                                 </label>
                                 <input
@@ -143,7 +143,7 @@ export default function Register() {
                                     type="password"
                                     name="password"
                                     value={data.password}
-                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     autoComplete="new-password"
                                     placeholder="Create a password"
                                     onChange={(e) => setData('password', e.target.value)}
@@ -156,7 +156,7 @@ export default function Register() {
 
                             {/* Confirm Password */}
                             <div className="space-y-2">
-                                <label htmlFor="password_confirmation" className="text-sm font-medium text-gray-300">
+                                <label htmlFor="password_confirmation" className="text-sm font-medium text-slate-700">
                                     Confirm Password
                                 </label>
                                 <input
@@ -164,7 +164,7 @@ export default function Register() {
                                     type="password"
                                     name="password_confirmation"
                                     value={data.password_confirmation}
-                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     autoComplete="new-password"
                                     placeholder="Confirm your password"
                                     onChange={(e) => setData('password_confirmation', e.target.value)}
@@ -184,15 +184,15 @@ export default function Register() {
                                         type="checkbox"
                                         checked={data.waiver_accepted}
                                         onChange={(e) => setData('waiver_accepted', e.target.checked)}
-                                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-[#16213e] bg-[#0f0f1e] rounded"
+                                        className="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-slate-300 bg-slate-50 rounded"
                                         required
                                     />
                                     <div className="text-sm">
-                                        <label htmlFor="waiver_accepted" className="font-medium text-gray-300">
+                                        <label htmlFor="waiver_accepted" className="font-medium text-slate-700">
                                             I agree to the Waiver and Release of Liability
                                         </label>
-                                        <div className="mt-2 p-3 bg-[#0f0f1e] border border-[#16213e] rounded-md text-xs text-gray-400 max-h-32 overflow-y-auto">
-                                            <p className="font-semibold text-gray-300 mb-2">Queens Ballers Republiq - WAIVER AND RELEASE OF LIABILITY</p>
+                                        <div className="mt-2 p-3 bg-slate-50 border border-slate-300 rounded-md text-xs text-slate-600 max-h-32 overflow-y-auto">
+                                            <p className="font-semibold text-slate-700 mb-2">Queens Ballers Republiq - WAIVER AND RELEASE OF LIABILITY</p>
                                             <p className="mb-2">
                                                 <strong>ASSUMPTION OF RISK:</strong> I understand that basketball is a contact sport that involves physical exertion and carries inherent risks of injury, including but not limited to sprains, strains, fractures, concussions, and other serious injuries that may result in permanent disability or death.
                                             </p>
@@ -220,7 +220,7 @@ export default function Register() {
                             <button
                                 type="submit"
                                 disabled={processing || !data.waiver_accepted}
-                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {processing ? 'Creating Account...' : 'Join the League'}
                             </button>
@@ -229,7 +229,7 @@ export default function Register() {
                             <div className="text-center">
                                 <Link
                                     href={route('login')}
-                                    className="text-sm text-blue-400 hover:text-blue-300"
+                                    className="text-sm text-orange-600 hover:text-orange-700"
                                 >
                                     Already have an account? Sign in
                                 </Link>

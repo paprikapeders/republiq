@@ -87,36 +87,31 @@ export function PublicSchedules({ games, teams, seasons }) {
                                             href={`/games/${game.id}`}
                                             className="block bg-white border border-slate-200 hover:border-orange-300 hover:shadow-lg transition-all rounded-lg p-5 shadow-sm"
                                         >
-                                            <div className="flex items-center justify-between">
-                                                {/* Teams */}
-                                                <div className="flex-1 min-w-0">
+                                            <div className="grid grid-cols-3 gap-4 items-center">
+                                                {/* Column 1: Game (Teams) */}
+                                                <div className="space-y-3">
                                                     {/* Team A */}
-                                                    <div className="flex items-center mb-3">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded flex items-center justify-center">
-                                                                <span className="text-white font-bold text-sm">
-                                                                    {teamA.substring(0, 3).toUpperCase()}
-                                                                </span>
-                                                            </div>
-                                                            <span className="text-slate-800 font-medium truncate">{teamA}</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded flex items-center justify-center">
+                                                            <span className="text-white font-bold text-xs">
+                                                                {teamA.substring(0, 3).toUpperCase()}
+                                                            </span>
                                                         </div>
+                                                        <span className="text-slate-800 font-medium truncate">{teamA}</span>
                                                     </div>
-
                                                     {/* Team B */}
-                                                    <div className="flex items-center">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded flex items-center justify-center">
-                                                                <span className="text-white font-bold text-sm">
-                                                                    {teamB.substring(0, 3).toUpperCase()}
-                                                                </span>
-                                                            </div>
-                                                            <span className="text-slate-800 font-medium truncate">{teamB}</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded flex items-center justify-center">
+                                                            <span className="text-white font-bold text-xs">
+                                                                {teamB.substring(0, 3).toUpperCase()}
+                                                            </span>
                                                         </div>
+                                                        <span className="text-slate-800 font-medium truncate">{teamB}</span>
                                                     </div>
                                                 </div>
 
-                                                {/* Venue & Game Info */}
-                                                <div className="flex-shrink-0 mx-6 text-center space-y-2 max-w-xs">
+                                                {/* Column 2: Venue */}
+                                                <div className="text-center space-y-2">
                                                     {getStatusBadge(game.status)}
                                                     <div className="text-sm text-slate-600">{time}</div>
                                                     <div className="flex items-center gap-1 text-xs text-slate-600 justify-center">
@@ -127,26 +122,27 @@ export function PublicSchedules({ games, teams, seasons }) {
                                                     </div>
                                                 </div>
 
-                                                {/* Scores */}
-                                                {game.status === 'completed' && (
-                                                    <div className="flex-shrink-0 text-right space-y-3">
-                                                        <div className="text-2xl font-bold text-orange-600">
-                                                            {game.team_a_score}
+                                                {/* Column 3: Score */}
+                                                <div className="text-right">
+                                                    {game.status === 'completed' ? (
+                                                        <div className="space-y-3">
+                                                            <div className="text-xl font-bold text-orange-600">
+                                                                {game.team_a_score}
+                                                            </div>
+                                                            <div className="text-xl font-bold text-orange-600">
+                                                                {game.team_b_score}
+                                                            </div>
                                                         </div>
-                                                        <div className="text-2xl font-bold text-orange-600">
-                                                            {game.team_b_score}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Time/Status for non-completed games */}
-                                                {game.status !== 'completed' && (
-                                                    <div className="flex-shrink-0 text-right w-16">
+                                                    ) : (
                                                         <div className="text-sm text-slate-600">
-                                                            {game.status === 'in_progress' ? 'LIVE' : time}
+                                                            {game.status === 'in_progress' ? (
+                                                                <span className="text-orange-600 font-medium">LIVE</span>
+                                                            ) : (
+                                                                <span>vs</span>
+                                                            )}
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
                                             </div>
                                         </Link>
                                     );

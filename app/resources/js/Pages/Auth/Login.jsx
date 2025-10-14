@@ -20,17 +20,17 @@ export default function Login({ status, canResetPassword }) {
         <>
             <Head title="Login" />
             
-            <div className="min-h-screen bg-[#0f0f1e] flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50 flex items-center justify-center p-4">
                 {/* Back to Home Button */}
                 <Link
                     href="/"
-                    className="absolute top-6 left-6 text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
+                    className="absolute top-6 left-6 text-slate-600 hover:text-slate-800 flex items-center gap-2 transition-colors"
                 >
                     <ArrowLeft className="h-4 w-4" />
                     Back to Home
                 </Link>
 
-                <div className="w-full max-w-md mx-auto bg-[#1a1a2e] border border-[#16213e] rounded-lg overflow-hidden shadow-2xl">
+                <div className="w-full max-w-md mx-auto bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xl">
                     {/* Header */}
                     <div className="text-center bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6">
                         <div className="flex items-center justify-center gap-3 mb-2">
@@ -88,7 +88,7 @@ export default function Login({ status, canResetPassword }) {
                         <form onSubmit={submit} className="space-y-4">
                             {/* Email */}
                             <div className="space-y-2">
-                                <label htmlFor="email" className="text-sm font-medium text-gray-300">
+                                <label htmlFor="email" className="text-sm font-medium text-slate-700">
                                     Email
                                 </label>
                                 <input
@@ -96,7 +96,7 @@ export default function Login({ status, canResetPassword }) {
                                     type="email"
                                     name="email"
                                     value={data.email}
-                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     autoComplete="username"
                                     placeholder="Enter your email"
                                     onChange={(e) => setData('email', e.target.value)}
@@ -109,7 +109,7 @@ export default function Login({ status, canResetPassword }) {
 
                             {/* Password */}
                             <div className="space-y-2">
-                                <label htmlFor="password" className="text-sm font-medium text-gray-300">
+                                <label htmlFor="password" className="text-sm font-medium text-slate-700">
                                     Password
                                 </label>
                                 <input
@@ -117,7 +117,7 @@ export default function Login({ status, canResetPassword }) {
                                     type="password"
                                     name="password"
                                     value={data.password}
-                                    className="w-full px-3 py-2 bg-[#0f0f1e] border border-[#16213e] text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 text-slate-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                     autoComplete="current-password"
                                     placeholder="Enter your password"
                                     onChange={(e) => setData('password', e.target.value)}
@@ -136,9 +136,9 @@ export default function Login({ status, canResetPassword }) {
                                     name="remember"
                                     checked={data.remember}
                                     onChange={(e) => setData('remember', e.target.checked)}
-                                    className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-[#16213e] bg-[#0f0f1e] rounded"
+                                    className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-slate-300 bg-slate-50 rounded"
                                 />
-                                <label htmlFor="remember" className="ml-2 block text-sm text-gray-300">
+                                <label htmlFor="remember" className="ml-2 block text-sm text-slate-700">
                                     Remember me
                                 </label>
                             </div>
