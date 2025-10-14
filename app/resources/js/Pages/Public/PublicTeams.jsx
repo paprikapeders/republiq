@@ -1,8 +1,9 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Users } from 'lucide-react';
+import { PublicNavbar } from '@/Pages/Public/PublicNavbar';
 
-export function PublicTeams({ teams, seasons }) {
+function PublicTeams({ teams, seasons }) {
     
     const activeSeason = seasons?.find(s => s.status === 'active' || s.is_active === true) || seasons?.[0];
     
@@ -13,8 +14,11 @@ export function PublicTeams({ teams, seasons }) {
     }) || [];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
-            <div className="max-w-6xl mx-auto px-4 py-8">
+        <>
+            <Head title="Teams - Queens Ballers Republiq" />
+            <PublicNavbar currentPage="teams" />
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
+                <div className="max-w-6xl mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-slate-800 mb-2">Teams</h1>
@@ -80,7 +84,10 @@ export function PublicTeams({ teams, seasons }) {
                         <p className="text-slate-600">No teams registered for this season yet.</p>
                     </div>
                 )}
+                </div>
             </div>
-        </div>
+        </>
     );
 }
+
+export default PublicTeams;

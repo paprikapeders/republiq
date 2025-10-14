@@ -11,7 +11,7 @@ export function PublicNavbar({ currentPage, onNavigate }) {
         } else if (page === 'schedules') {
             router.visit('/schedules');
         } else if (page === 'teams') {
-            router.visit('/teams');
+            router.visit('/public/teams');
         } else if (page === 'leaderboards') {
             router.visit('/leaderboards');
         } else if (onNavigate) {

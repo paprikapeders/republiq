@@ -12,7 +12,7 @@ use Inertia\Inertia;
 Route::get('/', [App\Http\Controllers\PublicController::class, 'home'])->name('home');
 Route::get('/schedules', [App\Http\Controllers\PublicController::class, 'schedules'])->name('public.schedules');
 Route::get('/games/{game}', [App\Http\Controllers\PublicController::class, 'gameDetail'])->name('public.game.detail');
-Route::get('/teams', [App\Http\Controllers\PublicController::class, 'teams'])->name('public.teams');
+Route::get('/public/teams', [App\Http\Controllers\PublicController::class, 'teams'])->name('public.teams');
 Route::get('/teams/{team}', [App\Http\Controllers\PublicController::class, 'teamDetail'])->name('public.team.detail');
 Route::get('/leaderboards', [App\Http\Controllers\PublicController::class, 'leaderboards'])->name('public.leaderboards');
 

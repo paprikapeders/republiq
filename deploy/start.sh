@@ -34,6 +34,8 @@ echo "Optimizing Laravel..."
 php artisan config:cache
 php artisan route:cache
 
+php artisan storage:link
+
 # Test nginx configuration
 echo "Testing nginx configuration..."
 nginx -t
