@@ -36,8 +36,7 @@ RUN mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cac
 
 # Run Laravel optimization commands
 RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+    && php artisan route:cache 
 
 # Copy configuration files
 COPY deploy/nginx.conf /etc/nginx/sites-available/default
