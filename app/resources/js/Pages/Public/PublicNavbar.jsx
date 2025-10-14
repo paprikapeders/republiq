@@ -1,9 +1,23 @@
 import React, { useState } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { Trophy, Menu, X } from 'lucide-react';
 
 export function PublicNavbar({ currentPage, onNavigate }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    const handleNavigation = (page) => {
+        if (page === 'home') {
+            router.visit('/');
+        } else if (page === 'schedules') {
+            router.visit('/schedules');
+        } else if (page === 'teams') {
+            router.visit('/teams');
+        } else if (page === 'leaderboards') {
+            router.visit('/leaderboards');
+        } else if (onNavigate) {
+            onNavigate(page);
+        }
+    };
 
     return (
         <nav className="bg-white/90 border-b border-orange-200/50 backdrop-blur-md shadow-sm sticky top-0 z-50">
@@ -12,7 +26,7 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                     {/* Logo and Title */}
                     <div 
                         className="flex items-center space-x-2 lg:space-x-3 cursor-pointer" 
-                        onClick={() => onNavigate('home')}
+                        onClick={() => handleNavigation('home')}
                     >
                         <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-lg">
                             <Trophy className="h-5 w-5 lg:h-7 lg:w-7 text-white" />
@@ -29,7 +43,7 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                     {/* Desktop Navigation Links */}
                     <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
                         <button
-                            onClick={() => onNavigate('home')}
+                            onClick={() => handleNavigation('home')}
                             className={`text-sm lg:text-base font-medium transition-colors ${
                                 currentPage === 'home'
                                     ? 'text-orange-600 border-b-2 border-orange-600 pb-1'
@@ -39,7 +53,7 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                             Home
                         </button>
                         <button
-                            onClick={() => onNavigate('schedules')}
+                            onClick={() => handleNavigation('schedules')}
                             className={`text-sm lg:text-base font-medium transition-colors ${
                                 currentPage === 'schedules'
                                     ? 'text-orange-600 border-b-2 border-orange-600 pb-1'
@@ -49,7 +63,7 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                             Schedules
                         </button>
                         <button
-                            onClick={() => onNavigate('teams')}
+                            onClick={() => handleNavigation('teams')}
                             className={`text-sm lg:text-base font-medium transition-colors ${
                                 currentPage === 'teams'
                                     ? 'text-orange-600 border-b-2 border-orange-600 pb-1'
@@ -59,7 +73,7 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                             Teams
                         </button>
                         <button
-                            onClick={() => onNavigate('leaderboards')}
+                            onClick={() => handleNavigation('leaderboards')}
                             className={`text-sm lg:text-base font-medium transition-colors ${
                                 currentPage === 'leaderboards'
                                     ? 'text-orange-600 border-b-2 border-orange-600 pb-1'
@@ -97,7 +111,7 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                         <div className="flex flex-col space-y-3">
                             <button
                                 onClick={() => {
-                                    onNavigate('home');
+                                    handleNavigation('home');
                                     setMobileMenuOpen(false);
                                 }}
                                 className={`text-left px-4 py-2 rounded-lg transition-colors font-medium ${
@@ -110,7 +124,7 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                             </button>
                             <button
                                 onClick={() => {
-                                    onNavigate('schedules');
+                                    handleNavigation('schedules');
                                     setMobileMenuOpen(false);
                                 }}
                                 className={`text-left px-4 py-2 rounded-lg transition-colors font-medium ${
@@ -123,7 +137,7 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                             </button>
                             <button
                                 onClick={() => {
-                                    onNavigate('teams');
+                                    handleNavigation('teams');
                                     setMobileMenuOpen(false);
                                 }}
                                 className={`text-left px-4 py-2 rounded-lg transition-colors font-medium ${
@@ -136,7 +150,7 @@ export function PublicNavbar({ currentPage, onNavigate }) {
                             </button>
                             <button
                                 onClick={() => {
-                                    onNavigate('leaderboards');
+                                    handleNavigation('leaderboards');
                                     setMobileMenuOpen(false);
                                 }}
                                 className={`text-left px-4 py-2 rounded-lg transition-colors font-medium ${

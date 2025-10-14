@@ -7,8 +7,10 @@ services:
     working_dir: /var/www/html/app
     volumes:
       - ./app:/var/www/html/app
+    depends_on:
+      - db
     networks:
-      - bwp-crm-new_bwp-crm-new-network
+      - queens_network
 
   nginx:
     image: nginx:latest
@@ -21,8 +23,26 @@ services:
     depends_on:
       - app
     networks:
-      - bwp-crm-new_bwp-crm-new-network
+      - queens_network
+
+  db:
+    image: mysql:8.0
+    container_name: queens_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: queens
+      MYSQL_USER: queens_user
+      MYSQL_PASSWORD: queens_pass
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - queens_network
 
 networks:
-  bwp-crm-new_bwp-crm-new-network:
-    external: true
+  queens_network:
+
+volumes:
+  db_data:
