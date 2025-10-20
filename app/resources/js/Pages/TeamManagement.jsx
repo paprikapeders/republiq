@@ -39,6 +39,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
         name: '',
         email: '',
         phone: '',
+        password: '',
         create_new: false,
         photo: null,
     });
@@ -50,6 +51,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
         jersey_number: '',
         position: '',
         photo: null,
+        password: '',
     });
 
     const handleCreateTeam = (e) => {
@@ -167,6 +169,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                 name: existingPlayer.user?.name || '',
                 email: existingPlayer.user?.email || '',
                 phone: existingPlayer.user?.phone || '',
+                password: '',
                 create_new: false,
             });
             setCreateNewPlayer(false);
@@ -180,6 +183,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                 name: '',
                 email: '',
                 phone: '',
+                password: '',
                 create_new: false,
             });
             setCreateNewPlayer(false);
@@ -234,6 +238,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
             jersey_number: player.jersey_number || '',
             position: player.position || '',
             photo: null, // Reset photo field for new uploads
+            password: '', // Always start with empty password field
         };
         console.log('Setting edit form data:', playerData);
         editPlayerForm.setData(playerData);
@@ -528,72 +533,6 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                         </div>
                     )}
 
-                    {/* Team Members (Coaches and Admins) */}
-                    {(userRole === 'coach' || userRole === 'admin') && approvedMembers.length > 0 && (
-                        <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                            <div className="p-6">
-                                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                    Team Members
-                                </h3>
-                                <div className="space-y-6">
-                                    {teams.map((team) => {
-                                        const teamApprovedMembers = team.players?.filter(p => p.status === 'approved') || [];
-                                        
-                                        if (teamApprovedMembers.length === 0) return null;
-                                        
-                                        return (
-                                            <div key={team.id}>
-                                                <h4 className="font-medium text-gray-900 mb-3">{team.name}</h4>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                    {teamApprovedMembers.map((player) => (
-                                                        <div key={player.id} className="border border-gray-200 rounded-lg p-3 relative">
-                                                            <div className="flex justify-between items-start">
-                                                                <div className="flex-1">
-                                                                    <p className="font-medium text-gray-900">{player.user.name}</p>
-                                                                    <p className="text-sm text-gray-600">{player.user.email}</p>
-                                                                    {player.user.phone && (
-                                                                        <p className="text-sm text-gray-600">{player.user.phone}</p>
-                                                                    )}
-                                                                    {player.jersey_number && (
-                                                                        <p className="text-sm text-gray-600">Jersey: #{player.jersey_number}</p>
-                                                                    )}
-                                                                    {player.position && (
-                                                                        <p className="text-sm text-gray-600">Position: {player.position}</p>
-                                                                    )}
-                                                                    <span className="inline-block mt-2 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
-                                                                        {player.user.role}
-                                                                    </span>
-                                                                </div>
-                                                                {userRole === 'admin' && (
-                                                                    <div className="flex gap-1">
-                                                                        <button
-                                                                            onClick={() => navigateToEditPlayer(player.id)}
-                                                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                                            title="Edit Player"
-                                                                        >
-                                                                            <Edit className="h-4 w-4" />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => openRemovePlayerDialog(player)}
-                                                                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                                            title="Remove Player"
-                                                                        >
-                                                                            <X className="h-4 w-4" />
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     {/* Empty State */}
                     {teams.length === 0 && (
                         <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -806,6 +745,7 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                             name: '',
                                             email: '',
                                             phone: '',
+                                            password: '',
                                             create_new: false,
                                         });
                                     }}
@@ -916,6 +856,26 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                             <p className="text-red-600 text-xs mt-1">{addPlayerForm.errors.phone}</p>
                                         )}
                                     </div>
+
+                                    <div className="mb-4">
+                                        <label htmlFor="edit-password" className="block text-sm font-medium text-gray-700 mb-2">
+                                            New Password (Optional)
+                                        </label>
+                                        <input
+                                            type="password"
+                                            id="edit-password"
+                                            placeholder="Enter new password (leave blank to keep current)"
+                                            value={addPlayerForm.data.password}
+                                            onChange={e => addPlayerForm.setData('password', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                        {addPlayerForm.errors.password && (
+                                            <p className="text-red-600 text-xs mt-1">{addPlayerForm.errors.password}</p>
+                                        )}
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Leave empty to keep the current password unchanged
+                                        </p>
+                                    </div>
                                 </>
                             ) : (
                                 // New Player Creation Fields
@@ -973,9 +933,27 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                         )}
                                     </div>
 
-                                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                        <p className="text-sm text-yellow-800">
-                                            <strong>Note:</strong> A new player account will be created with the default password: <code className="bg-yellow-100 px-1 rounded">defaultpassword123</code>
+                                    <div className="mb-4">
+                                        <label htmlFor="playerPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                                            Password *
+                                        </label>
+                                        <input
+                                            id="playerPassword"
+                                            type="password"
+                                            placeholder="Enter player's password"
+                                            value={addPlayerForm.data.password}
+                                            onChange={e => addPlayerForm.setData('password', e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required={createNewPlayer}
+                                        />
+                                        {addPlayerForm.errors.password && (
+                                            <p className="text-red-600 text-xs mt-1">{addPlayerForm.errors.password}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <p className="text-sm text-blue-800">
+                                            <strong>Note:</strong> A new player account will be created with the password you specify above.
                                         </p>
                                     </div>
                                 </>
@@ -1230,6 +1208,26 @@ export default function TeamManagement({ auth, teams, teamMembers, userRole, fla
                                         Current photo: {selectedPlayerToEdit.photo_path.split('/').pop()}
                                     </p>
                                 )}
+                            </div>
+
+                            <div className="mb-4">
+                                <label htmlFor="editPlayerPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                                    New Password (Optional)
+                                </label>
+                                <input
+                                    id="editPlayerPassword"
+                                    type="password"
+                                    placeholder="Enter new password (leave blank to keep current)"
+                                    value={editPlayerForm.data.password || ''}
+                                    onChange={e => editPlayerForm.setData('password', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                {editPlayerForm.errors.password && (
+                                    <p className="text-red-600 text-xs mt-1">{editPlayerForm.errors.password}</p>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Leave empty to keep the current password unchanged
+                                </p>
                             </div>
                             
                             <div className="flex gap-3">

@@ -278,6 +278,7 @@ class TeamManagementController extends Controller
             $rules['name'] = 'required|string|max:255';
             $rules['email'] = 'required|email|unique:users,email';
             $rules['phone'] = 'nullable|string|max:20';
+            $rules['password'] = 'required|string|min:8'; // Add password validation
         }
         
         $request->validate($rules);
@@ -300,7 +301,7 @@ class TeamManagementController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'role' => 'player',
-                'password' => Hash::make('defaultpassword123'), // Default password
+                'password' => Hash::make($request->password), // Use provided password
                 'email_verified_at' => now(), // Auto-verify admin-created users
             ]);
             $userId = $newUser->id;
@@ -415,14 +416,23 @@ class TeamManagementController extends Controller
             'jersey_number' => 'nullable|integer|min:0|max:99',
             'position' => 'nullable|string|max:255',
             'photo' => 'nullable|image|max:2048', // 2MB max
+            'password' => 'nullable|string|min:8', // Add password validation
         ]);
         
-        // Update user information
-        $player->user->update([
+        // Prepare user update data
+        $userUpdateData = [
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
-        ]);
+        ];
+        
+        // Add password to update data if provided
+        if ($request->filled('password')) {
+            $userUpdateData['password'] = Hash::make($request->password);
+        }
+        
+        // Update user information
+        $player->user->update($userUpdateData);
         
         // Handle photo upload
         $updateData = [

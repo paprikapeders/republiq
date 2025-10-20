@@ -38,6 +38,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                         Team Management
                                     </NavLink>
                                 )}
+                                {user.role === 'player' && (
+                                    <NavLink
+                                        href={route('player.stats')}
+                                        active={route().current('player.*')}
+                                    >
+                                        My Stats
+                                    </NavLink>
+                                )}
                                 {(user.role === 'referee' || user.role === 'admin') && (
                                     <NavLink
                                         href={route('scoresheet.index')}
@@ -172,6 +180,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                 active={route().current('teams.*')}
                             >
                                 Team Management
+                            </ResponsiveNavLink>
+                        )}
+                        {user.role === 'player' && (
+                            <ResponsiveNavLink
+                                href={route('player.stats')}
+                                active={route().current('player.*')}
+                            >
+                                My Stats
                             </ResponsiveNavLink>
                         )}
                         {(user.role === 'referee' || user.role === 'admin') && (

@@ -47,7 +47,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
             case 'player':
                 return [
                     { label: 'Join Team', href: route('teams.index'), icon: Users },
-                    { label: 'My Stats', href: '#', icon: BarChart3 }
+                    { label: 'My Stats', href: route('player.stats'), icon: BarChart3 }
                 ];
             case 'committee':
                 return [
@@ -345,7 +345,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                                             </div>
                                                         </div>
                                                     </Link>
-                                                    <div className="p-4 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors cursor-pointer">
+                                                    <Link href={route('player.stats')} className="p-4 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors">
                                                         <div className="flex items-center gap-3">
                                                             <BarChart3 className="h-6 w-6 text-orange-600" />
                                                             <div>
@@ -353,7 +353,7 @@ export default function Dashboard({ auth, redirectMessage, availableFeatures, fl
                                                                 <p className="text-sm text-gray-600">View your performance</p>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </Link>
                                                 </>
                                             )}
                                             {auth.user.role === 'referee' && (
