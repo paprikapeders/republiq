@@ -578,25 +578,25 @@ export default function Leaderboards({ players, mvpSettings }) {
                                         </div>
                                         
                                         <div className="overflow-x-auto">
-                                            <div className="flex items-center gap-2 sm:gap-4 text-xs lg:text-sm min-w-max">
-                                            <div className="text-center min-w-[50px]">
-                                                <p className="font-bold text-slate-800">{getStatValue(player, activeTab)}</p>
+                                            <div className="flex items-center gap-3 sm:gap-4 text-xs lg:text-sm min-w-max px-2 sm:px-0">
+                                            <div className="text-center min-w-[60px] px-2">
+                                                <p className="font-bold text-slate-800 mb-1">{getStatValue(player, activeTab)}</p>
                                                 <p className="text-slate-600">{getStatLabel(activeTab)}</p>
                                             </div>
-                                            <div className="text-center min-w-[45px]">
-                                                <p className="font-bold text-orange-600">{player.averages.points}</p>
+                                            <div className="text-center min-w-[55px] px-2">
+                                                <p className="font-bold text-orange-600 mb-1">{player.averages.points}</p>
                                                 <p className="text-slate-600">PPG</p>
                                             </div>
-                                            <div className="text-center min-w-[45px]">
-                                                <p className="font-bold text-slate-800">{player.averages.rebounds}</p>
+                                            <div className="text-center min-w-[55px] px-2">
+                                                <p className="font-bold text-slate-800 mb-1">{player.averages.rebounds}</p>
                                                 <p className="text-slate-600">RPG</p>
                                             </div>
-                                            <div className="text-center min-w-[45px]">
-                                                <p className="font-bold text-slate-800">{player.averages.assists}</p>
+                                            <div className="text-center min-w-[55px] px-2">
+                                                <p className="font-bold text-slate-800 mb-1">{player.averages.assists}</p>
                                                 <p className="text-slate-600">APG</p>
                                             </div>
-                                            <div className="text-center min-w-[35px]">
-                                                <p className="font-bold text-slate-800">{player.gamesPlayed}</p>
+                                            <div className="text-center min-w-[45px] px-2">
+                                                <p className="font-bold text-slate-800 mb-1">{player.gamesPlayed}</p>
                                                 <p className="text-slate-600">GP</p>
                                             </div>
                                         </div>

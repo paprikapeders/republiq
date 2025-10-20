@@ -2,14 +2,20 @@ import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { Trophy, Calendar, MapPin, Clock, Award, Users, TrendingUp } from 'lucide-react';
 import { PublicNavbar } from '@/Pages/Public/PublicNavbar';
-import { PublicSchedules } from '@/Pages/Public/PublicSchedules';
-import { PublicTeams } from '@/Pages/Public/PublicTeams';
+import PublicSchedules from '@/Pages/Public/PublicSchedules';
+import PublicTeams from '@/Pages/Public/PublicTeams';
 
 export default function Home({ auth, games, teams, seasons }) {
     const [currentPage, setCurrentPage] = useState('home');
 
     const handleNavigate = (page) => {
-        if (page === 'leaderboards') {
+        if (page === 'home') {
+            setCurrentPage('home');
+        } else if (page === 'schedules') {
+            router.visit('/schedules');
+        } else if (page === 'teams') {
+            router.visit('/public/teams');
+        } else if (page === 'leaderboards') {
             router.visit('/leaderboards');
         } else {
             setCurrentPage(page);

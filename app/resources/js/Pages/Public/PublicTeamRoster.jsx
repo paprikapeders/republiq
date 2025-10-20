@@ -1,7 +1,9 @@
 import React from 'react';
+import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Users } from 'lucide-react';
+import { PublicNavbar } from '@/Pages/Public/PublicNavbar';
 
-export function PublicTeamRoster({ team, onBack }) {
+function PublicTeamRoster({ team }) {
     // Get team color based on team name
     const getTeamGradient = () => {
         const name = team.name?.toLowerCase() || '';
@@ -16,16 +18,19 @@ export function PublicTeamRoster({ team, onBack }) {
     const players = team.players || [];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
-            <div className="max-w-6xl mx-auto px-4 py-8">
+        <>
+            <Head title={`${team.name} Roster - Queens Ballers Republiq`} />
+            <PublicNavbar currentPage="teams" />
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
+                <div className="max-w-6xl mx-auto px-4 py-8">
                 {/* Back Button */}
-                <button
-                    onClick={onBack}
+                <Link
+                    href="/public/teams"
                     className="mb-6 text-slate-600 hover:text-slate-800 flex items-center gap-2 transition-colors"
                 >
                     <ArrowLeft className="h-4 w-4" />
                     Back to Teams
-                </button>
+                </Link>
 
                 {/* Team Header */}
                 <div className="bg-white border border-slate-200 mb-8 overflow-hidden rounded-lg shadow-sm">
@@ -89,7 +94,10 @@ export function PublicTeamRoster({ team, onBack }) {
                         <p className="text-slate-600">No players registered for this team yet.</p>
                     </div>
                 )}
+                </div>
             </div>
-        </div>
+        </>
     );
 }
+
+export default PublicTeamRoster;

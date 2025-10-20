@@ -538,6 +538,93 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         
         setHasUnsavedChanges(true);
     };
+
+    const removeFieldGoal = (playerId, points, wasMade) => {
+        if (!selectedGame || isSaving) return;
+        
+        setLocalPlayerStats(prev => {
+            const currentStats = prev[playerId] || {
+                player_id: playerId,
+                points: 0,
+                field_goals_made: 0,
+                field_goals_attempted: 0,
+                three_pointers_made: 0,
+                three_pointers_attempted: 0,
+                free_throws_made: 0,
+                free_throws_attempted: 0,
+                assists: 0,
+                rebounds: 0,
+                fouls: 0,
+                steals: 0,
+                blocks: 0
+            };
+            
+            const updatedStats = { ...currentStats };
+            
+            // Remove points if it was made
+            if (wasMade) {
+                updatedStats.points = Math.max(0, (updatedStats.points || 0) - points);
+            }
+            
+            // Always remove the attempt
+            updatedStats.field_goals_attempted = Math.max(0, (updatedStats.field_goals_attempted || 0) - 1);
+            
+            // Remove made shot if it was made
+            if (wasMade) {
+                if (points === 3) {
+                    updatedStats.three_pointers_made = Math.max(0, (updatedStats.three_pointers_made || 0) - 1);
+                    updatedStats.three_pointers_attempted = Math.max(0, (updatedStats.three_pointers_attempted || 0) - 1);
+                } else if (points === 2) {
+                    updatedStats.field_goals_made = Math.max(0, (updatedStats.field_goals_made || 0) - 1);
+                } else if (points === 1) {
+                    updatedStats.free_throws_made = Math.max(0, (updatedStats.free_throws_made || 0) - 1);
+                    updatedStats.free_throws_attempted = Math.max(0, (updatedStats.free_throws_attempted || 0) - 1);
+                }
+            } else {
+                // If it was a miss, only remove the attempt
+                if (points === 3) {
+                    updatedStats.three_pointers_attempted = Math.max(0, (updatedStats.three_pointers_attempted || 0) - 1);
+                } else if (points === 1) {
+                    updatedStats.free_throws_attempted = Math.max(0, (updatedStats.free_throws_attempted || 0) - 1);
+                }
+            }
+            
+            return { ...prev, [playerId]: updatedStats };
+        });
+        
+        // Update team scores locally if it was a made shot
+        if (wasMade) {
+            const player = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])]
+                .find(p => (p.user?.id || p.id) === playerId);
+            
+            if (player) {
+                const isTeamA = selectedGame.team_a?.players?.some(p => (p.user?.id || p.id) === playerId);
+                setGameState(prev => ({
+                    ...prev,
+                    team_a_score: isTeamA ? Math.max(0, prev.team_a_score - points) : prev.team_a_score,
+                    team_b_score: !isTeamA ? Math.max(0, prev.team_b_score - points) : prev.team_b_score
+                }));
+            }
+        }
+        
+        // Track action history for individual undo
+        const action = {
+            id: `action-${Date.now()}`,
+            type: 'remove_field_goal',
+            points: points,
+            wasMade: wasMade,
+            timestamp: Date.now(),
+            quarter: gameState.quarter,
+            gameTime: formatTime(gameState.time_remaining)
+        };
+        
+        setActionHistory(prev => ({
+            ...prev,
+            [playerId]: [...(prev[playerId] || []), action]
+        }));
+        
+        setHasUnsavedChanges(true);
+    };
     
     const saveAllChanges = async () => {
         if (!selectedGame || !hasUnsavedChanges) return;
@@ -1215,7 +1302,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         <button
             onClick={disabled ? undefined : onClick}
             disabled={disabled}
-            className={`${compact ? 'h-6 w-8 text-xs' : 'h-7 w-9 text-xs'} p-0 font-medium border rounded transition-colors flex items-center justify-center leading-none ${
+            className={`${compact ? 'h-7 w-9 text-xs' : 'h-8 w-10 text-xs'} p-1 font-medium border rounded transition-colors flex items-center justify-center leading-none ${
                 disabled 
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
                     : `hover:bg-gray-100 ${className}`
@@ -1233,27 +1320,27 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         
         return (
             <tr className={`border-b hover:bg-gray-50 ${teamColor}`}>
-                <td className="px-1 py-1 text-center font-mono font-bold text-xs border-r">{player.jersey_number || player.number || '00'}</td>
-                <td className="px-2 py-1 font-medium text-xs border-r max-w-[80px] truncate" title={player.user?.name || player.name}>
+                <td className="px-2 py-2 text-center font-mono font-bold text-xs border-r">{player.jersey_number || player.number || '00'}</td>
+                <td className="px-3 py-2 font-medium text-xs border-r max-w-[100px] truncate" title={player.user?.name || player.name}>
                     {(player.user?.name || player.name)?.split(' ').pop() || 'Unknown'}
                 </td>
-                <td className="px-1 py-1 text-center font-bold text-lg border-r">{stats?.points || 0}</td>
-                <td className="px-1 py-1 text-center text-xs border-r">
+                <td className="px-2 py-2 text-center font-bold text-lg border-r">{stats?.points || 0}</td>
+                <td className="px-2 py-2 text-center text-xs border-r">
                     {stats?.field_goals_made || 0}/{stats?.field_goals_attempted || 0}
                 </td>
-                <td className="px-1 py-1 text-center text-xs border-r">
+                <td className="px-2 py-2 text-center text-xs border-r">
                     {stats?.three_pointers_made || 0}/{stats?.three_pointers_attempted || 0}
                 </td>
-                <td className="px-1 py-1 text-center text-xs border-r">
+                <td className="px-2 py-2 text-center text-xs border-r">
                     {stats?.free_throws_made || 0}/{stats?.free_throws_attempted || 0}
                 </td>
-                <td className="px-1 py-1 text-center text-xs border-r">{stats?.assists || 0}</td>
-                <td className="px-1 py-1 text-center text-xs border-r">{stats?.rebounds || 0}</td>
-                <td className="px-1 py-1 text-center text-xs border-r">{stats?.steals || 0}</td>
-                <td className="px-1 py-1 text-center text-xs border-r">{stats?.blocks || 0}</td>
-                <td className="px-1 py-1 text-center text-xs border-r">{stats?.fouls || 0}</td>
-                <td className="px-1 py-1 border-r">
-                    <div className="flex gap-0.5 justify-center">
+                <td className="px-2 py-2 text-center text-xs border-r">{stats?.assists || 0}</td>
+                <td className="px-2 py-2 text-center text-xs border-r">{stats?.rebounds || 0}</td>
+                <td className="px-2 py-2 text-center text-xs border-r">{stats?.steals || 0}</td>
+                <td className="px-2 py-2 text-center text-xs border-r">{stats?.blocks || 0}</td>
+                <td className="px-2 py-2 text-center text-xs border-r">{stats?.fouls || 0}</td>
+                <td className="px-2 py-2 border-r">
+                    <div className="grid grid-cols-2 gap-1 place-items-center">
                         <QuickButton
                             onClick={() => recordFieldGoal(playerId, 2, true)}
                             className="bg-green-100 hover:bg-green-200 border-green-300 text-green-800"
@@ -1270,10 +1357,26 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             2✗
                         </QuickButton>
+                        <QuickButton
+                            onClick={() => removeFieldGoal(playerId, 2, true)}
+                            className="bg-green-200 hover:bg-green-300 border-green-400 text-green-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            2✓-
+                        </QuickButton>
+                        <QuickButton
+                            onClick={() => removeFieldGoal(playerId, 2, false)}
+                            className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            2✗-
+                        </QuickButton>
                     </div>
                 </td>
-                <td className="px-1 py-1 border-r">
-                    <div className="flex gap-0.5 justify-center">
+                <td className="px-2 py-2 border-r">
+                    <div className="grid grid-cols-2 gap-1 place-items-center">
                         <QuickButton
                             onClick={() => recordFieldGoal(playerId, 3, true)}
                             className="bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-800"
@@ -1290,10 +1393,26 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             3✗
                         </QuickButton>
+                        <QuickButton
+                            onClick={() => removeFieldGoal(playerId, 3, true)}
+                            className="bg-purple-200 hover:bg-purple-300 border-purple-400 text-purple-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            3✓-
+                        </QuickButton>
+                        <QuickButton
+                            onClick={() => removeFieldGoal(playerId, 3, false)}
+                            className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            3✗-
+                        </QuickButton>
                     </div>
                 </td>
-                <td className="px-1 py-1 border-r">
-                    <div className="flex gap-0.5 justify-center">
+                <td className="px-2 py-2 border-r">
+                    <div className="grid grid-cols-2 gap-1 place-items-center">
                         <QuickButton
                             onClick={() => recordFieldGoal(playerId, 1, true)}
                             className="bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-800"
@@ -1310,10 +1429,26 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             FT✗
                         </QuickButton>
+                        <QuickButton
+                            onClick={() => removeFieldGoal(playerId, 1, true)}
+                            className="bg-blue-200 hover:bg-blue-300 border-blue-400 text-blue-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            FT✓-
+                        </QuickButton>
+                        <QuickButton
+                            onClick={() => removeFieldGoal(playerId, 1, false)}
+                            className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            FT✗-
+                        </QuickButton>
                     </div>
                 </td>
-                <td className="px-1 py-1 border-r">
-                    <div className="grid grid-cols-3 gap-0.5">
+                <td className="px-2 py-2 border-r">
+                    <div className="grid grid-cols-2 gap-1 place-items-center">
                         <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'assists', 1)}
                             className="bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800 text-xs"
@@ -1321,6 +1456,14 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             disabled={isSaving}
                         >
                             A+
+                        </QuickButton>
+                        <QuickButton
+                            onClick={() => updatePlayerStat(playerId, 'assists', -1)}
+                            className="bg-yellow-200 hover:bg-yellow-300 border-yellow-400 text-yellow-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            A-
                         </QuickButton>
                         <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'rebounds', 1)}
@@ -1331,12 +1474,28 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             R+
                         </QuickButton>
                         <QuickButton
+                            onClick={() => updatePlayerStat(playerId, 'rebounds', -1)}
+                            className="bg-orange-200 hover:bg-orange-300 border-orange-400 text-orange-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            R-
+                        </QuickButton>
+                        <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'steals', 1)}
                             className="bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-800 text-xs"
                             compact
                             disabled={isSaving}
                         >
                             S+
+                        </QuickButton>
+                        <QuickButton
+                            onClick={() => updatePlayerStat(playerId, 'steals', -1)}
+                            className="bg-blue-200 hover:bg-blue-300 border-blue-400 text-blue-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            S-
                         </QuickButton>
                         <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'blocks', 1)}
@@ -1347,6 +1506,14 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             B+
                         </QuickButton>
                         <QuickButton
+                            onClick={() => updatePlayerStat(playerId, 'blocks', -1)}
+                            className="bg-green-200 hover:bg-green-300 border-green-400 text-green-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            B-
+                        </QuickButton>
+                        <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'fouls', 1)}
                             className="bg-red-100 hover:bg-red-200 border-red-300 text-red-800 text-xs"
                             compact
@@ -1354,27 +1521,15 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             F+
                         </QuickButton>
-                        <div></div>
+                        <QuickButton
+                            onClick={() => updatePlayerStat(playerId, 'fouls', -1)}
+                            className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
+                            compact
+                            disabled={isSaving}
+                        >
+                            F-
+                        </QuickButton>
                     </div>
-                </td>
-                <td className="px-1 py-1 text-center">
-                    <button
-                        onClick={() => undoPlayerAction(playerId)}
-                        disabled={isSaving || !actionHistory[playerId] || actionHistory[playerId].length === 0}
-                        className={`h-6 w-10 p-0 text-xs rounded transition-colors flex items-center justify-center ${
-                            !isSaving && actionHistory[playerId] && actionHistory[playerId].length > 0
-                                ? 'bg-red-100 hover:bg-red-200 border border-red-300 text-red-700'
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-                        }`}
-                        title={isSaving 
-                            ? 'Cannot undo while saving...' 
-                            : actionHistory[playerId] && actionHistory[playerId].length > 0 
-                                ? `Undo last action (${actionHistory[playerId].length} actions)` 
-                                : 'No actions to undo'
-                        }
-                    >
-                        <Undo2 className="h-3 w-3" />
-                    </button>
                 </td>
             </tr>
         );
@@ -1773,8 +1928,8 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         >
             <Head title={`Live Scoresheet - ${selectedGame.team_a?.name} vs ${selectedGame.team_b?.name}`} />
 
-            <div className="py-3">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-2">
+            <div className="py-4">
+                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-4">
                     
                     {/* Game Header - Compact */}
                     <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-3">
@@ -1840,40 +1995,20 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                     </button>
                                 </div>
                                 <div className="flex justify-center gap-2 mt-2 flex-wrap">
-                                    <div className="flex gap-0.5">
-                                        <button
-                                            onClick={() => useTimeout('a')}
-                                            disabled={isSaving || gameState.team_a_timeouts <= 0}
-                                            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-1 py-0.5 rounded text-xs"
-                                        >
-                                            A-TO({gameState.team_a_timeouts})
-                                        </button>
-                                        <button
-                                            onClick={() => undoTimeout('a')}
-                                            disabled={isSaving || !actionHistory[`team_a_timeout`] || actionHistory[`team_a_timeout`].length === 0 || gameState.team_a_timeouts >= (gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter)}
-                                            className="bg-blue-400 hover:bg-blue-500 disabled:bg-gray-300 text-white px-1 py-0.5 rounded text-xs"
-                                            title="Undo timeout"
-                                        >
-                                            ↶
-                                        </button>
-                                    </div>
-                                    <div className="flex gap-0.5">
-                                        <button
-                                            onClick={() => useTimeout('b')}
-                                            disabled={isSaving || gameState.team_b_timeouts <= 0}
-                                            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-1 py-0.5 rounded text-xs"
-                                        >
-                                            B-TO({gameState.team_b_timeouts})
-                                        </button>
-                                        <button
-                                            onClick={() => undoTimeout('b')}
-                                            disabled={isSaving || !actionHistory[`team_b_timeout`] || actionHistory[`team_b_timeout`].length === 0 || gameState.team_b_timeouts >= (gameState.timeouts_per_quarter || gameRules.timeouts_per_quarter)}
-                                            className="bg-green-400 hover:bg-green-500 disabled:bg-gray-300 text-white px-1 py-0.5 rounded text-xs"
-                                            title="Undo timeout"
-                                        >
-                                            ↶
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={() => useTimeout('a')}
+                                        disabled={isSaving || gameState.team_a_timeouts <= 0}
+                                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-2 py-1 rounded text-xs"
+                                    >
+                                        A-TO({gameState.team_a_timeouts})
+                                    </button>
+                                    <button
+                                        onClick={() => useTimeout('b')}
+                                        disabled={isSaving || gameState.team_b_timeouts <= 0}
+                                        className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-2 py-1 rounded text-xs"
+                                    >
+                                        B-TO({gameState.team_b_timeouts})
+                                    </button>
                                     <button
                                         onClick={() => openActivePlayersModal(selectedGame.team_a_id)}
                                         disabled={isSaving}
@@ -1910,44 +2045,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         </div>
                     </div>
 
-                    {/* Quick Actions Panel */}
-                    {hasUnsavedChanges && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <AlertCircle className="h-4 w-4 text-yellow-600" />
-                                    <span className="text-xs font-medium text-yellow-800">
-                                        You have unsaved changes
-                                    </span>
-                                </div>
-                                <div className="flex gap-1">
-                                    <button
-                                        onClick={undoLastAction}
-                                        disabled={isSaving}
-                                        className={`px-2 py-1 rounded text-xs ${
-                                            isSaving 
-                                                ? 'bg-gray-400 text-white cursor-not-allowed' 
-                                                : 'bg-gray-500 hover:bg-gray-600 text-white'
-                                        }`}
-                                    >
-                                        <Undo2 className="h-3 w-3 inline mr-1" />
-                                        Revert All
-                                    </button>
-                                    <button
-                                        onClick={saveAllChanges}
-                                        disabled={isSaving}
-                                        className={`px-2 py-1 rounded text-xs font-medium ${
-                                            isSaving 
-                                                ? 'bg-gray-400 text-white cursor-not-allowed' 
-                                                : 'bg-green-600 hover:bg-green-700 text-white'
-                                        }`}
-                                    >
-                                        {isSaving ? 'Saving...' : '💾 Save All'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    {/* Quick Actions Panel - REMOVED */}
 
                     {/* Substitution Dialog */}
                     {showSubDialog && (
@@ -2324,32 +2422,50 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
 
                     {/* Live Stats Table */}
                     <div className="bg-white rounded-lg shadow overflow-hidden">
-                        <div className="px-3 py-1 bg-gray-50 border-b flex items-center justify-between">
+                        <div className="px-4 py-3 bg-gray-50 border-b flex items-center justify-between">
                             <h3 className="text-sm font-medium text-gray-900">Live Player Statistics</h3>
                             <div className="text-xs text-gray-600 font-mono">
                                 {gameState.team_a_score} - {gameState.team_b_score}
                             </div>
                         </div>
+                        
+                        {/* Legend for action buttons */}
+                        <div className="px-4 py-3 bg-blue-50 border-b text-sm">
+                            <div className="flex flex-wrap items-center gap-6">
+                                <span className="font-medium text-blue-800">Quick Reference:</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium text-blue-700">➕ Light Buttons:</span>
+                                    <span className="text-gray-600">Add points, assists, rebounds, etc.</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium text-red-700">➖ Dark Buttons:</span>
+                                    <span className="text-gray-600">Remove/correct mistaken stats</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium text-purple-700">🏀 Action Columns:</span>
+                                    <span className="text-gray-600">2PT/3PT shots, Free Throws, Assists, Rebounds, Steals, Blocks, Fouls</span>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-100">
                                     <tr>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">JER</th>
-                                        <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-r">PLAYER</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">PTS</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">FG</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">3PT</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">FT</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">A</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">R</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">S</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">B</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">F</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">2PT</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">3PT</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">FT</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700 border-r">+/-</th>
-                                        <th className="px-1 py-2 text-center text-xs font-bold text-gray-700">↶</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">JER</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-gray-700 border-r">PLAYER</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">PTS</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">FG</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">3PT</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">FT</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">A</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">R</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">S</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">B</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">F</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">2PT</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">3PT</th>
+                                        <th className="px-2 py-3 text-center text-xs font-bold text-gray-700 border-r">FT</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -2369,7 +2485,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                     
                                     {/* Separator */}
                                     <tr className="bg-gray-100">
-                                        <td colSpan="15" className="px-4 py-2 text-center text-sm font-medium text-gray-700">
+                                        <td colSpan="14" className="px-4 py-3 text-center text-sm font-medium text-gray-700">
                                             {selectedGame.team_b?.name} Players (Active: {activePlayers[selectedGame.team_b_id]?.length || 0}/5)
                                         </td>
                                     </tr>

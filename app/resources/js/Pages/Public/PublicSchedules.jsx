@@ -1,8 +1,9 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Calendar, MapPin } from 'lucide-react';
+import { PublicNavbar } from '@/Pages/Public/PublicNavbar';
 
-export function PublicSchedules({ games, teams, seasons }) {
+function PublicSchedules({ games, teams, seasons }) {
     
     const activeSeason = seasons?.find(s => s.status === 'active') || seasons?.[0];
     const filteredGames = games?.filter(g => g.league_id === activeSeason?.id) || [];
@@ -52,8 +53,11 @@ export function PublicSchedules({ games, teams, seasons }) {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
-            <div className="max-w-6xl mx-auto px-4 py-8">
+        <>
+            <Head title="Schedules - Queens Ballers Republiq" />
+            <PublicNavbar currentPage="schedules" />
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-blue-50">
+                <div className="max-w-6xl mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-slate-800 mb-2">Game Schedule</h1>
@@ -157,7 +161,10 @@ export function PublicSchedules({ games, teams, seasons }) {
                         <p className="text-slate-600">No games scheduled for this season yet.</p>
                     </div>
                 )}
+                </div>
             </div>
-        </div>
+        </>
     );
 }
+
+export default PublicSchedules;

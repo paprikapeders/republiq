@@ -11,7 +11,7 @@ export default function TeamDetail({ team, games, activeLeague }) {
             <div className="bg-white/90 border-b border-orange-200 shadow-sm backdrop-blur-sm">
                 <div className="max-w-7xl mx-auto px-4 py-4 lg:py-6">
                     <Link 
-                        href="/" 
+                        href="/public/teams" 
                         className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 transition-colors mb-4 font-medium"
                     >
                         <ChevronLeft className="h-4 w-4" />
@@ -49,21 +49,21 @@ export default function TeamDetail({ team, games, activeLeague }) {
                     
                     {team.players && team.players.length > 0 ? (
                         <div className="overflow-x-auto">
-                            <table className="min-w-full text-xs sm:text-sm">
+                            <table className="w-full text-xs sm:text-sm" style={{ minWidth: '800px' }}>
                                 <thead>
                                     <tr className="border-b border-slate-200">
-                                        <th className="text-left py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[30px]">#</th>
+                                        <th className="sticky left-0 z-10 bg-white text-left py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[30px] border-r border-slate-200">#</th>
                                         <th className="text-left py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[100px]">Player</th>
-                                        <th className="text-left py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[40px] hidden sm:table-cell">Pos</th>
+                                        <th className="text-left py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[40px]">Pos</th>
                                         <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[35px]">GP</th>
                                         <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[40px]">PPG</th>
                                         <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[40px]">RPG</th>
                                         <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[40px]">APG</th>
-                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[40px] hidden md:table-cell">SPG</th>
-                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[40px] hidden md:table-cell">BPG</th>
-                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[45px] hidden lg:table-cell">FG%</th>
-                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[45px] hidden lg:table-cell">3P%</th>
-                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[45px] hidden lg:table-cell">FT%</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[40px]">SPG</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[40px]">BPG</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[45px]">FG%</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[45px]">3P%</th>
+                                        <th className="text-center py-2 sm:py-3 px-1 sm:px-2 text-slate-600 font-medium min-w-[45px]">FT%</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -71,7 +71,7 @@ export default function TeamDetail({ team, games, activeLeague }) {
                                         const averages = player.averages || {};
                                         return (
                                             <tr key={index} className="border-b border-slate-200/50 hover:bg-slate-50 transition-colors">
-                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-orange-600 font-bold">
+                                                <td className="sticky left-0 z-10 bg-white hover:bg-slate-50 py-2 sm:py-3 px-1 sm:px-2 text-orange-600 font-bold border-r border-slate-200">
                                                     {player.jersey_number || player.number || '--'}
                                                 </td>
                                                 <td className="py-2 sm:py-3 px-1 sm:px-2 text-slate-800 font-medium">
@@ -84,7 +84,7 @@ export default function TeamDetail({ team, games, activeLeague }) {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-slate-700 hidden sm:table-cell">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-slate-700">
                                                     {player.position || '--'}
                                                 </td>
                                                 <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700">
@@ -99,19 +99,19 @@ export default function TeamDetail({ team, games, activeLeague }) {
                                                 <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700">
                                                     {averages.assists || 0}
                                                 </td>
-                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700 hidden md:table-cell">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700">
                                                     {averages.steals || 0}
                                                 </td>
-                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700 hidden md:table-cell">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700">
                                                     {averages.blocks || 0}
                                                 </td>
-                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700 hidden lg:table-cell">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700">
                                                     {averages.field_goal_percentage || 0}%
                                                 </td>
-                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700 hidden lg:table-cell">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700">
                                                     {averages.three_point_percentage || 0}%
                                                 </td>
-                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700 hidden lg:table-cell">
+                                                <td className="py-2 sm:py-3 px-1 sm:px-2 text-center text-slate-700">
                                                     {averages.free_throw_percentage || 0}%
                                                 </td>
                                             </tr>
@@ -193,12 +193,33 @@ export default function TeamDetail({ team, games, activeLeague }) {
                                         >
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-sm text-slate-600">
-                                                        {isHomeTeam ? 'vs' : '@'}
-                                                    </span>
-                                                    <span className="font-medium text-slate-800">
-                                                        {opponent?.name}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm text-slate-600">
+                                                            {isHomeTeam ? 'vs' : '@'}
+                                                        </span>
+                                                        <span className="font-medium text-slate-800">
+                                                            {opponent?.name || (isHomeTeam ? game.team_b?.name : game.team_a?.name) || 'Unknown Team'}
+                                                        </span>
+                                                    </div>
+                                                    {isCompleted && (game.team_a_score !== null && game.team_b_score !== null) && (
+                                                        <div className="ml-4 flex items-center gap-1 text-sm font-mono">
+                                                            <span className={`font-bold ${
+                                                                (isHomeTeam && game.team_a_score > game.team_b_score) || 
+                                                                (!isHomeTeam && game.team_b_score > game.team_a_score) 
+                                                                    ? 'text-green-600' : 'text-slate-600'
+                                                            }`}>
+                                                                {isHomeTeam ? game.team_a_score : game.team_b_score}
+                                                            </span>
+                                                            <span className="text-slate-400">-</span>
+                                                            <span className={`font-bold ${
+                                                                (!isHomeTeam && game.team_a_score > game.team_b_score) || 
+                                                                (isHomeTeam && game.team_b_score > game.team_a_score) 
+                                                                    ? 'text-green-600' : 'text-slate-600'
+                                                            }`}>
+                                                                {isHomeTeam ? game.team_b_score : game.team_a_score}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className={`px-2 py-1 rounded-full text-xs font-medium ${
                                                     isCompleted 
@@ -221,10 +242,10 @@ export default function TeamDetail({ team, games, activeLeague }) {
                                                         minute: '2-digit' 
                                                     })}
                                                 </div>
-                                                {game.location && (
+                                                {(game.location || game.venue) && (
                                                     <div className="flex items-center gap-1">
                                                         <MapPin className="h-3 w-3" />
-                                                        {game.location}
+                                                        {game.location || game.venue}
                                                     </div>
                                                 )}
                                             </div>

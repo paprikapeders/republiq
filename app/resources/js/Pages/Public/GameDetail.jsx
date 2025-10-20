@@ -218,10 +218,10 @@ export default function GameDetail({ game, mvpSettings }) {
                 
                 {playersToShow.length > 0 ? (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full text-xs lg:text-sm">
+                    <table className="w-full text-xs lg:text-sm" style={{ minWidth: '600px' }}>
                         <thead>
                             <tr className="border-b border-slate-200">
-                                <th className="text-left py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[30px]">#</th>
+                                <th className="sticky left-0 z-10 bg-white text-left py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[30px] border-r border-slate-200">#</th>
                                 <th className="text-left py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[80px]">Player</th>
                                 <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[35px]">PTS</th>
                                 <th className="text-center py-2 lg:py-3 px-1 lg:px-2 text-slate-600 font-medium min-w-[45px]">FG</th>
@@ -260,7 +260,7 @@ export default function GameDetail({ game, mvpSettings }) {
                                     <tr key={index} className={`border-b border-slate-200/50 hover:bg-slate-50 transition-colors ${
                                         isMvp ? 'bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30' : ''
                                     }`}>
-                                        <td className={`py-3 px-2 font-bold ${isMvp ? 'text-yellow-400' : 'text-orange-400'}`}>
+                                        <td className={`sticky left-0 z-10 bg-white hover:bg-slate-50 py-3 px-2 font-bold border-r border-slate-200 ${isMvp ? 'text-yellow-400' : 'text-orange-400'}`}>
                                             {player?.jersey_number || player?.number || '--'}
                                             {isMvp && <Trophy className="h-4 w-4 inline ml-1 text-yellow-400" />}
                                         </td>
