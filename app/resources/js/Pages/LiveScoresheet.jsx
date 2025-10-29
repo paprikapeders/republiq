@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 export default function LiveScoresheet({ auth, games, leagues, allTeams, selectedGame, gameState: initialGameState, userRole, flash }) {
+    const [isLoading, setIsLoading] = useState(false);
     const [gameState, setGameState] = useState(initialGameState || {
         quarter: 1,
         time_remaining: 12 * 60,
@@ -67,6 +68,8 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     });
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
+    const [showNegativeButtons, setShowNegativeButtons] = useState(true);
+    const [isUpdatingGameState, setIsUpdatingGameState] = useState(false);
 
     // Initialize local stats and active players from server data
     useEffect(() => {
@@ -179,6 +182,78 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         }
     }, [gameState.time_remaining, gameState.is_running]);
 
+    // Auto-save player stats every 30 seconds if there are unsaved changes
+    useEffect(() => {
+        let autoSaveInterval;
+        
+        if (hasUnsavedChanges && selectedGame && Object.keys(localPlayerStats).length > 0) {
+            autoSaveInterval = setInterval(async () => {
+                if (!isSaving && hasUnsavedChanges) {
+                    try {
+                        setIsSaving(true);
+                        const playerStatsToSave = [];
+                        
+                        for (const [playerId, stats] of Object.entries(localPlayerStats)) {
+                            const allPlayers = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])];
+                            const player = allPlayers.find(p => (p.user?.id || p.user_id) == playerId);
+                            
+                            if (player) {
+                                const filteredStats = {
+                                    player_id: playerId,
+                                    points: stats.points || 0,
+                                    assists: stats.assists || 0,
+                                    rebounds: stats.rebounds || 0,
+                                    steals: stats.steals || 0,
+                                    blocks: stats.blocks || 0,
+                                    fouls: stats.fouls || 0,
+                                    field_goals_made: stats.field_goals_made || 0,
+                                    field_goals_attempted: stats.field_goals_attempted || 0,
+                                    three_pointers_made: stats.three_pointers_made || 0,
+                                    three_pointers_attempted: stats.three_pointers_attempted || 0,
+                                    free_throws_made: stats.free_throws_made || 0,
+                                    free_throws_attempted: stats.free_throws_attempted || 0,
+                                    turnovers: stats.turnovers || 0,
+                                    minutes_played: stats.minutes_played || 0
+                                };
+                                playerStatsToSave.push(filteredStats);
+                            }
+                        }
+                        
+                        if (playerStatsToSave.length > 0) {
+                            await new Promise((resolve, reject) => {
+                                router.post(route('scoresheet.save-player-stats', selectedGame.id), {
+                                    player_stats: playerStatsToSave
+                                }, {
+                                    preserveState: true,
+                                    preserveScroll: true,
+                                    onSuccess: () => {
+                                        setHasUnsavedChanges(false);
+                                        console.log('Auto-saved player stats successfully');
+                                        resolve();
+                                    },
+                                    onError: (errors) => {
+                                        console.error('Error auto-saving player stats:', errors);
+                                        reject(errors);
+                                    }
+                                });
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Auto-save failed:', error);
+                    } finally {
+                        setIsSaving(false);
+                    }
+                }
+            }, 30000); // Auto-save every 30 seconds
+        }
+        
+        return () => {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+            }
+        };
+    }, [hasUnsavedChanges, selectedGame, localPlayerStats, isSaving]);
+
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -186,14 +261,73 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
 
     const selectGame = (gameId) => {
-        router.get(route('scoresheet.show', gameId));
+        setIsLoading(true);
+        router.get(route('scoresheet.show', gameId), {
+            onFinish: () => setIsLoading(false)
+        });
     };
 
-    const updateGameState = (updates) => {
+    const updateGameState = async (updates) => {
         const newGameState = { ...gameState, ...updates };
         setGameState(newGameState);
         
         if (selectedGame) {
+            setIsLoading(true);
+            setIsUpdatingGameState(true);
+            // Auto-save player stats before updating game state to prevent data loss
+            if (hasUnsavedChanges && Object.keys(localPlayerStats).length > 0) {
+                try {
+                    const playerStatsToSave = [];
+                    
+                    for (const [playerId, stats] of Object.entries(localPlayerStats)) {
+                        const allPlayers = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])];
+                        const player = allPlayers.find(p => (p.user?.id || p.user_id) == playerId);
+                        
+                        if (player) {
+                            const filteredStats = {
+                                player_id: playerId,
+                                points: stats.points || 0,
+                                assists: stats.assists || 0,
+                                rebounds: stats.rebounds || 0,
+                                steals: stats.steals || 0,
+                                blocks: stats.blocks || 0,
+                                fouls: stats.fouls || 0,
+                                field_goals_made: stats.field_goals_made || 0,
+                                field_goals_attempted: stats.field_goals_attempted || 0,
+                                three_pointers_made: stats.three_pointers_made || 0,
+                                three_pointers_attempted: stats.three_pointers_attempted || 0,
+                                free_throws_made: stats.free_throws_made || 0,
+                                free_throws_attempted: stats.free_throws_attempted || 0,
+                                turnovers: stats.turnovers || 0,
+                                minutes_played: stats.minutes_played || 0
+                            };
+                            playerStatsToSave.push(filteredStats);
+                        }
+                    }
+                    
+                    if (playerStatsToSave.length > 0) {
+                        await new Promise((resolve, reject) => {
+                            router.post(route('scoresheet.save-player-stats', selectedGame.id), {
+                                player_stats: playerStatsToSave
+                            }, {
+                                preserveState: true,
+                                preserveScroll: true,
+                                onSuccess: () => {
+                                    setHasUnsavedChanges(false);
+                                    resolve();
+                                },
+                                onError: (errors) => {
+                                    console.error('Error auto-saving player stats:', errors);
+                                    reject(errors);
+                                }
+                            });
+                        });
+                    }
+                } catch (error) {
+                    console.error('Failed to auto-save stats before game state update:', error);
+                }
+            }
+            
             // Include active players in the update
             const gameUpdateData = {
                 ...newGameState,
@@ -207,10 +341,19 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 preserveScroll: true,
                 onSuccess: () => {
                     // Success - no action needed, local state is already updated
+                    setIsUpdatingGameState(false);
+                    setIsLoading(false);
                 },
                 onError: (errors) => {
                     console.error('Error updating game state:', errors);
                     // Don't revert state on error to prevent timer reset
+                    setIsUpdatingGameState(false);
+                    setIsLoading(false);
+                },
+                onFinish: () => {
+                    // Ensure loading state is cleared regardless of success/error
+                    setIsUpdatingGameState(false);
+                    setIsLoading(false);
                 }
             });
         }
@@ -725,6 +868,8 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             return;
         }
         
+        setIsLoading(true);
+        
         try {
             // Save any unsaved changes first
             if (hasUnsavedChanges) {
@@ -740,6 +885,10 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 onError: (errors) => {
                     console.error('Error completing game:', errors);
                     alert('Error completing game. Please try again.');
+                    setIsLoading(false);
+                },
+                onFinish: () => {
+                    setIsLoading(false);
                 }
             });
         } catch (error) {
@@ -1274,6 +1423,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     const resetGameStats = async () => {
         if (!selectedGame) return;
         
+        setIsLoading(true);
         setIsResetting(true);
         try {
             router.post(`/games/${selectedGame.id}/reset-stats`, {}, {
@@ -1287,8 +1437,12 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 onError: (errors) => {
                     console.error('Reset failed:', errors);
                     setIsResetting(false);
+                    setIsLoading(false);
                     const errorMessage = errors.error || 'Failed to reset game stats. Please try again.';
                     alert(errorMessage);
+                },
+                onFinish: () => {
+                    setIsLoading(false);
                 }
             });
         } catch (error) {
@@ -1298,21 +1452,25 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         }
     };
 
-    const QuickButton = ({ onClick, children, className = "", compact = false, disabled = false }) => (
-        <button
-            onClick={disabled ? undefined : onClick}
-            disabled={disabled}
-            className={`${compact ? 'h-7 w-9 text-xs' : 'h-8 w-10 text-xs'} p-1 font-medium border rounded transition-colors flex items-center justify-center leading-none ${
-                disabled 
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
-                    : `hover:bg-gray-100 ${className}`
-            }`}
-        >
-            {children}
-        </button>
-    );
+    const QuickButton = ({ onClick, children, className = "", compact = false, disabled = false }) => {
+        const isButtonDisabled = disabled || isLoading || isUpdatingGameState || isSaving || isSavingSubstitution;
+        
+        return (
+            <button
+                onClick={isButtonDisabled ? undefined : onClick}
+                disabled={isButtonDisabled}
+                className={`${compact ? 'h-7 w-9 text-xs' : 'h-8 w-10 text-xs'} p-1 font-medium border rounded transition-colors flex items-center justify-center leading-none ${
+                    isButtonDisabled 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                        : `hover:bg-gray-100 ${className}`
+                }`}
+            >
+                {children}
+            </button>
+        );
+    };
 
-    const PlayerRow = ({ player, teamColor, isActive = true }) => {
+    const PlayerRow = ({ player, teamColor, isActive = true, showNegativeButtons = true }) => {
         const playerId = player.user?.id || player.id;
         const stats = localPlayerStats[playerId] || {};
         
@@ -1357,22 +1515,26 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             2✗
                         </QuickButton>
-                        <QuickButton
-                            onClick={() => removeFieldGoal(playerId, 2, true)}
-                            className="bg-green-200 hover:bg-green-300 border-green-400 text-green-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            2✓-
-                        </QuickButton>
-                        <QuickButton
-                            onClick={() => removeFieldGoal(playerId, 2, false)}
-                            className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            2✗-
-                        </QuickButton>
+                        {showNegativeButtons && (
+                            <>
+                                <QuickButton
+                                    onClick={() => removeFieldGoal(playerId, 2, true)}
+                                    className="bg-green-200 hover:bg-green-300 border-green-400 text-green-900 text-xs"
+                                    compact
+                                    disabled={isSaving}
+                                >
+                                    2✓-
+                                </QuickButton>
+                                <QuickButton
+                                    onClick={() => removeFieldGoal(playerId, 2, false)}
+                                    className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
+                                    compact
+                                    disabled={isSaving}
+                                >
+                                    2✗-
+                                </QuickButton>
+                            </>
+                        )}
                     </div>
                 </td>
                 <td className="px-2 py-2 border-r">
@@ -1393,22 +1555,26 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             3✗
                         </QuickButton>
-                        <QuickButton
-                            onClick={() => removeFieldGoal(playerId, 3, true)}
-                            className="bg-purple-200 hover:bg-purple-300 border-purple-400 text-purple-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            3✓-
-                        </QuickButton>
-                        <QuickButton
-                            onClick={() => removeFieldGoal(playerId, 3, false)}
-                            className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            3✗-
-                        </QuickButton>
+                        {showNegativeButtons && (
+                            <>
+                                <QuickButton
+                                    onClick={() => removeFieldGoal(playerId, 3, true)}
+                                    className="bg-purple-200 hover:bg-purple-300 border-purple-400 text-purple-900 text-xs"
+                                    compact
+                                    disabled={isSaving}
+                                >
+                                    3✓-
+                                </QuickButton>
+                                <QuickButton
+                                    onClick={() => removeFieldGoal(playerId, 3, false)}
+                                    className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
+                                    compact
+                                    disabled={isSaving}
+                                >
+                                    3✗-
+                                </QuickButton>
+                            </>
+                        )}
                     </div>
                 </td>
                 <td className="px-2 py-2 border-r">
@@ -1429,22 +1595,26 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             FT✗
                         </QuickButton>
-                        <QuickButton
-                            onClick={() => removeFieldGoal(playerId, 1, true)}
-                            className="bg-blue-200 hover:bg-blue-300 border-blue-400 text-blue-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            FT✓-
-                        </QuickButton>
-                        <QuickButton
-                            onClick={() => removeFieldGoal(playerId, 1, false)}
-                            className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            FT✗-
-                        </QuickButton>
+                        {showNegativeButtons && (
+                            <>
+                                <QuickButton
+                                    onClick={() => removeFieldGoal(playerId, 1, true)}
+                                    className="bg-blue-200 hover:bg-blue-300 border-blue-400 text-blue-900 text-xs"
+                                    compact
+                                    disabled={isSaving}
+                                >
+                                    FT✓-
+                                </QuickButton>
+                                <QuickButton
+                                    onClick={() => removeFieldGoal(playerId, 1, false)}
+                                    className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
+                                    compact
+                                    disabled={isSaving}
+                                >
+                                    FT✗-
+                                </QuickButton>
+                            </>
+                        )}
                     </div>
                 </td>
                 <td className="px-2 py-2 border-r">
@@ -1457,14 +1627,16 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             A+
                         </QuickButton>
-                        <QuickButton
-                            onClick={() => updatePlayerStat(playerId, 'assists', -1)}
-                            className="bg-yellow-200 hover:bg-yellow-300 border-yellow-400 text-yellow-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            A-
-                        </QuickButton>
+                        {showNegativeButtons && (
+                            <QuickButton
+                                onClick={() => updatePlayerStat(playerId, 'assists', -1)}
+                                className="bg-yellow-200 hover:bg-yellow-300 border-yellow-400 text-yellow-900 text-xs"
+                                compact
+                                disabled={isSaving}
+                            >
+                                A-
+                            </QuickButton>
+                        )}
                         <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'rebounds', 1)}
                             className="bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-800 text-xs"
@@ -1473,14 +1645,16 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             R+
                         </QuickButton>
-                        <QuickButton
-                            onClick={() => updatePlayerStat(playerId, 'rebounds', -1)}
-                            className="bg-orange-200 hover:bg-orange-300 border-orange-400 text-orange-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            R-
-                        </QuickButton>
+                        {showNegativeButtons && (
+                            <QuickButton
+                                onClick={() => updatePlayerStat(playerId, 'rebounds', -1)}
+                                className="bg-orange-200 hover:bg-orange-300 border-orange-400 text-orange-900 text-xs"
+                                compact
+                                disabled={isSaving}
+                            >
+                                R-
+                            </QuickButton>
+                        )}
                         <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'steals', 1)}
                             className="bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-800 text-xs"
@@ -1489,14 +1663,16 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             S+
                         </QuickButton>
-                        <QuickButton
-                            onClick={() => updatePlayerStat(playerId, 'steals', -1)}
-                            className="bg-blue-200 hover:bg-blue-300 border-blue-400 text-blue-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            S-
-                        </QuickButton>
+                        {showNegativeButtons && (
+                            <QuickButton
+                                onClick={() => updatePlayerStat(playerId, 'steals', -1)}
+                                className="bg-blue-200 hover:bg-blue-300 border-blue-400 text-blue-900 text-xs"
+                                compact
+                                disabled={isSaving}
+                            >
+                                S-
+                            </QuickButton>
+                        )}
                         <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'blocks', 1)}
                             className="bg-green-100 hover:bg-green-200 border-green-300 text-green-800 text-xs"
@@ -1505,14 +1681,16 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             B+
                         </QuickButton>
-                        <QuickButton
-                            onClick={() => updatePlayerStat(playerId, 'blocks', -1)}
-                            className="bg-green-200 hover:bg-green-300 border-green-400 text-green-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            B-
-                        </QuickButton>
+                        {showNegativeButtons && (
+                            <QuickButton
+                                onClick={() => updatePlayerStat(playerId, 'blocks', -1)}
+                                className="bg-green-200 hover:bg-green-300 border-green-400 text-green-900 text-xs"
+                                compact
+                                disabled={isSaving}
+                            >
+                                B-
+                            </QuickButton>
+                        )}
                         <QuickButton
                             onClick={() => updatePlayerStat(playerId, 'fouls', 1)}
                             className="bg-red-100 hover:bg-red-200 border-red-300 text-red-800 text-xs"
@@ -1521,14 +1699,16 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         >
                             F+
                         </QuickButton>
-                        <QuickButton
-                            onClick={() => updatePlayerStat(playerId, 'fouls', -1)}
-                            className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
-                            compact
-                            disabled={isSaving}
-                        >
-                            F-
-                        </QuickButton>
+                        {showNegativeButtons && (
+                            <QuickButton
+                                onClick={() => updatePlayerStat(playerId, 'fouls', -1)}
+                                className="bg-red-200 hover:bg-red-300 border-red-400 text-red-900 text-xs"
+                                compact
+                                disabled={isSaving}
+                            >
+                                F-
+                            </QuickButton>
+                        )}
                     </div>
                 </td>
             </tr>
@@ -1892,9 +2072,9 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         {selectedGame && selectedGame.status !== 'completed' && ['referee', 'admin', 'committee'].includes(userRole) && (
                             <button
                                 onClick={completeGame}
-                                disabled={isSaving}
+                                disabled={isLoading || isUpdatingGameState || isSaving || isSavingSubstitution}
                                 className={`px-4 py-2 rounded font-medium ${
-                                    isSaving 
+                                    isLoading || isUpdatingGameState || isSaving || isSavingSubstitution
                                         ? 'bg-gray-400 text-white cursor-not-allowed' 
                                         : 'bg-blue-600 hover:bg-blue-700 text-white'
                                 }`}
@@ -1905,9 +2085,9 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         {selectedGame && ['referee', 'admin', 'committee'].includes(userRole) && (
                             <button
                                 onClick={() => setShowResetConfirm(true)}
-                                disabled={isResetting || isSaving}
+                                disabled={isLoading || isUpdatingGameState || isResetting || isSaving || isSavingSubstitution}
                                 className={`px-4 py-2 rounded font-medium inline-flex items-center gap-2 ${
-                                    isResetting || isSaving
+                                    isLoading || isUpdatingGameState || isResetting || isSaving || isSavingSubstitution
                                         ? 'bg-gray-400 text-white cursor-not-allowed' 
                                         : 'bg-red-600 hover:bg-red-700 text-white'
                                 }`}
@@ -1917,8 +2097,18 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                             </button>
                         )}
                         <button 
-                            onClick={() => router.get(route('scoresheet.index'))}
-                            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                            onClick={() => {
+                                setIsLoading(true);
+                                router.get(route('scoresheet.index'), {
+                                    onFinish: () => setIsLoading(false)
+                                });
+                            }}
+                            disabled={isLoading || isUpdatingGameState || isSaving || isSavingSubstitution}
+                            className={`px-4 py-2 rounded ${
+                                isLoading || isUpdatingGameState || isSaving || isSavingSubstitution
+                                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                                    : 'bg-gray-500 hover:bg-gray-600 text-white'
+                            }`}
                         >
                             Back to Games
                         </button>
@@ -2431,7 +2621,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                         
                         {/* Legend for action buttons */}
                         <div className="px-4 py-3 bg-blue-50 border-b text-sm">
-                            <div className="flex flex-wrap items-center gap-6">
+                            <div className="flex flex-wrap items-center gap-6 mb-2">
                                 <span className="font-medium text-blue-800">Quick Reference:</span>
                                 <div className="flex items-center gap-2">
                                     <span className="font-medium text-blue-700">➕ Light Buttons:</span>
@@ -2445,6 +2635,17 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                     <span className="font-medium text-purple-700">🏀 Action Columns:</span>
                                     <span className="text-gray-600">2PT/3PT shots, Free Throws, Assists, Rebounds, Steals, Blocks, Fouls</span>
                                 </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={showNegativeButtons}
+                                        onChange={(e) => setShowNegativeButtons(e.target.checked)}
+                                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                    />
+                                    <span className="font-medium text-red-700">Show Negative Buttons (-, Remove)</span>
+                                </label>
                             </div>
                         </div>
                         
@@ -2479,6 +2680,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                                 player={player} 
                                                 teamColor="bg-blue-25"
                                                 isActive={isActive}
+                                                showNegativeButtons={showNegativeButtons}
                                             />
                                         );
                                     })}
@@ -2500,6 +2702,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                                 player={player} 
                                                 teamColor="bg-green-25"
                                                 isActive={isActive}
+                                                showNegativeButtons={showNegativeButtons}
                                             />
                                         );
                                     })}
