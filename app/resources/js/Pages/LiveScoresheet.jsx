@@ -329,10 +329,21 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             }
             
             // Include active players in the update
+            const currentTeamAActive = activePlayers[selectedGame.team_a_id] || 
+                (selectedGame.team_a.players.slice(0, 5).map(p => p.user?.id || p.id));
+            const currentTeamBActive = activePlayers[selectedGame.team_b_id] || 
+                (selectedGame.team_b.players.slice(0, 5).map(p => p.user?.id || p.id));
+            
+            console.log('UpdateGameState - Sending active players:', {
+                team_a_active: currentTeamAActive,
+                team_b_active: currentTeamBActive,
+                activePlayers: activePlayers
+            });
+            
             const gameUpdateData = {
                 ...newGameState,
-                team_a_active_players: activePlayers[selectedGame.team_a_id] || [],
-                team_b_active_players: activePlayers[selectedGame.team_b_id] || []
+                team_a_active_players: currentTeamAActive,
+                team_b_active_players: currentTeamBActive
             };
             
             // Use Inertia router instead of fetch to avoid CSRF issues
@@ -776,10 +787,21 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         
         try {
             // First, save game state with active players
+            const currentTeamAActive = activePlayers[selectedGame.team_a_id] || 
+                (selectedGame.team_a.players.slice(0, 5).map(p => p.user?.id || p.id));
+            const currentTeamBActive = activePlayers[selectedGame.team_b_id] || 
+                (selectedGame.team_b.players.slice(0, 5).map(p => p.user?.id || p.id));
+            
+            console.log('SaveAllChanges - Sending active players:', {
+                team_a_active: currentTeamAActive,
+                team_b_active: currentTeamBActive,
+                activePlayers: activePlayers
+            });
+            
             const gameUpdateData = {
                 ...gameState,
-                team_a_active_players: activePlayers[selectedGame.team_a_id] || [],
-                team_b_active_players: activePlayers[selectedGame.team_b_id] || []
+                team_a_active_players: currentTeamAActive,
+                team_b_active_players: currentTeamBActive
             };
             
             // Save game state synchronously
@@ -962,12 +984,16 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         const timeString = formatTime(gameState.time_remaining);
         
         // Update active players
-        setActivePlayers(prev => ({
-            ...prev,
-            [selectedTeamForSub]: prev[selectedTeamForSub].map(id => 
-                id === playerOut ? playerIn : id
-            )
-        }));
+        setActivePlayers(prev => {
+            const updated = {
+                ...prev,
+                [selectedTeamForSub]: prev[selectedTeamForSub].map(id => 
+                    id === playerOut ? playerIn : id
+                )
+            };
+            console.log('Single substitution - Updated active players:', updated);
+            return updated;
+        });
 
         // Log substitution
         const playerOutName = [...(selectedGame.team_a?.players || []), ...(selectedGame.team_b?.players || [])]
@@ -1031,6 +1057,7 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                 );
             });
             
+            console.log('Multiple substitution - Updated active players:', newActivePlayers);
             return newActivePlayers;
         });
         
@@ -1074,10 +1101,21 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         
         try {
             // Save game state with active players and current stats
+            const currentTeamAActive = activePlayers[selectedGame.team_a_id] || 
+                (selectedGame.team_a.players.slice(0, 5).map(p => p.user?.id || p.id));
+            const currentTeamBActive = activePlayers[selectedGame.team_b_id] || 
+                (selectedGame.team_b.players.slice(0, 5).map(p => p.user?.id || p.id));
+            
+            console.log('SaveActivePlayers - Sending active players:', {
+                team_a_active: currentTeamAActive,
+                team_b_active: currentTeamBActive,
+                activePlayers: activePlayers
+            });
+            
             const gameUpdateData = {
                 ...gameState,
-                team_a_active_players: activePlayers[selectedGame.team_a_id] || [],
-                team_b_active_players: activePlayers[selectedGame.team_b_id] || []
+                team_a_active_players: currentTeamAActive,
+                team_b_active_players: currentTeamBActive
             };
             
             // Save game state first using Inertia
