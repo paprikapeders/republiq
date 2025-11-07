@@ -254,6 +254,24 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
         };
     }, [hasUnsavedChanges, selectedGame, localPlayerStats, isSaving]);
 
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            // Ctrl+S or Cmd+S to save
+            if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+                event.preventDefault();
+                if (selectedGame && !isSaving && !isLoading && !isUpdatingGameState && !isSavingSubstitution) {
+                    saveAllChanges();
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [selectedGame, isSaving, isLoading, isUpdatingGameState, isSavingSubstitution]);
+
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -781,21 +799,24 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
     };
     
     const saveAllChanges = async () => {
-        if (!selectedGame || !hasUnsavedChanges) return;
+        if (!selectedGame) return;
         
         setIsSaving(true);
         
         try {
-            // First, save game state with active players
-            const currentTeamAActive = activePlayers[selectedGame.team_a_id] || 
-                (selectedGame.team_a.players.slice(0, 5).map(p => p.user?.id || p.id));
-            const currentTeamBActive = activePlayers[selectedGame.team_b_id] || 
-                (selectedGame.team_b.players.slice(0, 5).map(p => p.user?.id || p.id));
+            // First, save game state with active players - ensure we have valid data
+            const currentTeamAActive = (activePlayers[selectedGame.team_a_id] && activePlayers[selectedGame.team_a_id].length > 0) 
+                ? activePlayers[selectedGame.team_a_id] 
+                : selectedGame.team_a.players.slice(0, 5).map(p => p.user?.id || p.id);
+            const currentTeamBActive = (activePlayers[selectedGame.team_b_id] && activePlayers[selectedGame.team_b_id].length > 0)
+                ? activePlayers[selectedGame.team_b_id] 
+                : selectedGame.team_b.players.slice(0, 5).map(p => p.user?.id || p.id);
             
-            console.log('SaveAllChanges - Sending active players:', {
+            console.log('SaveAllChanges - Saving all game data:', {
+                gameState: gameState,
                 team_a_active: currentTeamAActive,
                 team_b_active: currentTeamBActive,
-                activePlayers: activePlayers
+                localPlayerStats: Object.keys(localPlayerStats).length
             });
             
             const gameUpdateData = {
@@ -872,11 +893,17 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
             }
             
             setHasUnsavedChanges(false);
-            alert('All changes saved successfully!');
+            
+            // Show success message
+            alert('All game data saved successfully!\n\n' +
+                  '✅ Game state (scores, timeouts, quarter, time)\n' +
+                  '✅ Active players\n' +
+                  '✅ Player statistics\n' +
+                  '✅ Substitutions');
             
         } catch (error) {
             console.error('Error saving changes:', error);
-            alert('Error saving changes. Please try again.');
+            alert('Error saving game data. Please try again.\n\nError: ' + (error.message || 'Unknown error'));
         } finally {
             setIsSaving(false);
         }
@@ -2118,6 +2145,32 @@ export default function LiveScoresheet({ auth, games, leagues, allTeams, selecte
                                 }`}
                             >
                                 ✅ Complete Game
+                            </button>
+                        )}
+                        {selectedGame && ['coach', 'referee', 'admin', 'committee'].includes(userRole) && (
+                            <button
+                                onClick={saveAllChanges}
+                                disabled={isLoading || isUpdatingGameState || isSaving || isSavingSubstitution}
+                                title="Save all game data (Ctrl+S)"
+                                className={`px-4 py-2 rounded font-medium inline-flex items-center gap-2 ${
+                                    isLoading || isUpdatingGameState || isSaving || isSavingSubstitution
+                                        ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                        : hasUnsavedChanges 
+                                            ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse' 
+                                            : 'bg-green-600 hover:bg-green-700 text-white'
+                                }`}
+                            >
+                                {isSaving ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        💾 Save All
+                                        {hasUnsavedChanges && <span className="text-xs">(•)</span>}
+                                    </>
+                                )}
                             </button>
                         )}
                         {selectedGame && ['referee', 'admin', 'committee'].includes(userRole) && (
